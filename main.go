@@ -59,6 +59,7 @@ func main() {
 	fmt.Printf("%d circles, %d sliders, %d spinners\n",
 		beatmap.NCircles, beatmap.NSliders, beatmap.NSpinners)
 	fmt.Printf("%dx\n", beatmap.maxCombo())
+	fmt.Printf("%d spacing singletaps (%.4f%%)\n\n", diff.NSingles, float64(diff.NSingles)/float64(len(beatmap.Objects))*100.0)
 	fmt.Printf("%.2f stars (%.2f aim, %.2f speed)\n", diff.Total,
 		diff.Aim, diff.Speed)
 	fmt.Printf("%.0f%%\n", pp.ComputedAccuracy.value0()*100)

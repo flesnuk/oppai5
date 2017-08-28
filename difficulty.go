@@ -87,7 +87,7 @@ func dSpacingWeight(Type int, distance float64) float64 {
 * obj. this assumes that normpos is already computed.
 * this also sets is_single if type is DIFF_SPEED
  */
-func dStrain(Type int, obj HitObject, prev HitObject, speedMul float64) {
+func dStrain(Type int, obj *HitObject, prev HitObject, speedMul float64) {
 	var value float64
 	timeElapsed := (obj.Time - prev.Time) / speedMul
 	var decay = math.Pow(DecayBase[Type], timeElapsed/1000.0)
@@ -134,7 +134,7 @@ func (d *DiffCalc) calcIndividual(Type int) float64 {
 
 	// calculate all strains
 	for i := 0; i < len(d.Beatmap.Objects); i++ {
-		var obj = d.Beatmap.Objects[i]
+		var obj = &d.Beatmap.Objects[i]
 
 		var prev *HitObject
 		if i > 0 {

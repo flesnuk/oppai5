@@ -122,7 +122,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	arBonus := 1.0
 
 	if mapstats.AR > 10.33 {
-		arBonus += 0.45 * (float64(mapstats.AR) - 10.33)
+		arBonus += 0.45 * (float64(mapstats.AR) - 10.3333)
 	} else if mapstats.AR < 8.0 {
 		lowArBonus := 0.01 * (8.0 - float64(mapstats.AR))
 
@@ -193,12 +193,14 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 
 }
 
+// PPv2ssWithMods calculates the pp of the map with the mods passed and 100% acc
 func (pp *PPv2) PPv2ssWithMods(aimStars, speedStars float64, b *Map, mods int) {
 	pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
 		len(b.Objects), b.Mode, mods, -1, -1, 0, 0, 0,
 		b.AR, b.OD, 1, b)
 }
 
+// PPv2ss calculates the pp of the map with nomods and 100% acc
 func (pp *PPv2) PPv2ss(aimStars, speedStars float64, b *Map) {
 	pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
 		len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
