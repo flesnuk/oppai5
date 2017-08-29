@@ -1,6 +1,8 @@
 package main
 
-import "math"
+import (
+	"math"
+)
 
 /* ------------------------------------------------------------- */
 /* pp calc                                                       */
@@ -33,7 +35,7 @@ type PPv2Parameters struct {
 // PPv2 : structure to store ppv2 values
 type PPv2 struct {
 	Total, Aim, Speed, Acc float64
-	ComputedAccuracy       Accuracy
+	ComputedAccuracy       *Accuracy
 }
 
 func (pp *PPv2) ppv2x(aimStars, speedStars float64,
@@ -69,7 +71,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	}
 
 	/* accuracy -------------------------------------------- */
-	pp.ComputedAccuracy = Accuracy{
+	pp.ComputedAccuracy = &Accuracy{
 		N300:    n300,
 		N100:    n100,
 		N50:     n50,
@@ -78,6 +80,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 
 	accuracy := pp.ComputedAccuracy.value0()
 	realAcc := accuracy
+
 
 	switch scoreVersion {
 	case 1:
@@ -191,6 +194,14 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 			math.Pow(pp.Acc, 1.1),
 		1.0/1.1) * finalMultiplier
 
+
+}
+
+// PPv2WithMods calculates the pp of the map with the mods passed and acc passed
+func (pp *PPv2) PPv2WithMods(aimStars, speedStars float64, b *Map, mods, n300, n100, n50, nmiss, combo int) {
+	pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
+		len(b.Objects), b.Mode, mods, combo, n300, n100, n50, nmiss,
+		b.AR, b.OD, 1, b)
 }
 
 // PPv2ssWithMods calculates the pp of the map with the mods passed and 100% acc

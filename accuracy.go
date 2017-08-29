@@ -1,6 +1,8 @@
 package main
 
-import "math"
+import (
+	"math"
+)
 
 /* ------------------------------------------------------------- */
 /* acc calc                                                      */
@@ -73,10 +75,10 @@ func (acc *Accuracy) value(nobjects int) float64 {
 		nobjects = n300x + acc.N100 + acc.N50 + acc.NMisses
 	}
 
-	res := float64((acc.N50*50.0 +
-		acc.N100*100.0 +
-		n300x*300.0) /
-		(nobjects * 300.0))
+	res := (float64(acc.N50)*50.0 +
+		float64(acc.N100)*100.0 +
+		float64(n300x)*300.0) /
+		(float64(nobjects) * 300.0)
 
 	return math.Max(0.0, math.Min(res, 1.0))
 }
