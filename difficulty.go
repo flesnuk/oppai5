@@ -1,4 +1,4 @@
-package main
+package oppai
 
 import "math"
 
@@ -124,6 +124,7 @@ type DiffCalc struct {
 	Beatmap           Map // the beatmap we want to calculate the difficulty for
 	speedMul          float64
 	strains           []float64
+	mapStats          *MapStats
 }
 
 func (d *DiffCalc) calcIndividual(Type int) float64 {
@@ -195,8 +196,12 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 
 	mapstats := &MapStats{
 		CS: d.Beatmap.CS,
+		AR: d.Beatmap.AR,
+		HP: d.Beatmap.HP,
+		OD: d.Beatmap.OD,
 	}
-	ModsApply(mods, mapstats, ApplyCS)
+	ModsApply(mods, mapstats, 15)
+	d.mapStats = mapstats
 	d.speedMul = float64(mapstats.speed)
 
 	radius := (PlayfieldWidth / 16.0) *

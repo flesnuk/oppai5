@@ -1,4 +1,4 @@
-package main
+package oppai
 
 import "math"
 
@@ -14,6 +14,7 @@ type Map struct {
 	NCircles, NSliders, NSpinners int
 	HP, CS, OD, AR                float32
 	SV, TickRate                  float32
+	MaxCombo                      int
 
 	Objects []HitObject
 	TPoints []Timing
@@ -69,6 +70,7 @@ func (m *Map) maxCombo() int {
 		res += max(0, ticks)
 	}
 
+	m.MaxCombo = res
 	return res
 
 }

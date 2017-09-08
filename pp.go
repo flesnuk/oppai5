@@ -1,4 +1,4 @@
-package main
+package oppai
 
 import (
 	"math"
@@ -35,13 +35,13 @@ type PPv2Parameters struct {
 // PPv2 : structure to store ppv2 values
 type PPv2 struct {
 	Total, Aim, Speed, Acc float64
-	ComputedAccuracy       *Accuracy
+	ComputedAccuracy       Accuracy
 }
 
 func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	maxCombo, nsliders, ncircles, nobjects, mode, mods,
 	combo, n300, n100, n50, nmiss int, baseAR, baseOD float32,
-	scoreVersion int, beatmap *Map) {
+	scoreVersion int, beatmap *Map, acc float64) PPv2 {
 
 	if beatmap != nil {
 		mode = beatmap.Mode
@@ -71,35 +71,43 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	}
 
 	/* accuracy -------------------------------------------- */
-	pp.ComputedAccuracy = &Accuracy{
-		N300:    n300,
-		N100:    n100,
-		N50:     n50,
-		NMisses: nmiss,
-	}
+	var realAcc float64
+	var accuracy float64
 
-	accuracy := pp.ComputedAccuracy.value0()
-	realAcc := accuracy
+	if acc >= 0.0 {
+		realAcc = acc
+		accuracy = acc
+	} else {
 
-
-	switch scoreVersion {
-	case 1:
-		/* scorev1 ignores sliders since they are free 300s
-		and for some reason also ignores spinners */
-		nspinners := nobjects - nsliders - ncircles
-
-		realAcc = (&Accuracy{
-			N300:    n300 - nsliders - nspinners,
+		pp.ComputedAccuracy = Accuracy{
+			N300:    n300,
 			N100:    n100,
 			N50:     n50,
 			NMisses: nmiss,
-		}).value0()
+		}
 
-		realAcc = math.Max(0.0, realAcc)
-	case 2:
-		ncircles = nobjects
-	default:
-		panic("unsupported score")
+		accuracy := pp.ComputedAccuracy.value0()
+		realAcc = accuracy
+
+		switch scoreVersion {
+		case 1:
+			/* scorev1 ignores sliders since they are free 300s
+			and for some reason also ignores spinners */
+			nspinners := nobjects - nsliders - ncircles
+
+			realAcc = (&Accuracy{
+				N300:    n300 - nsliders - nspinners,
+				N100:    n100,
+				N50:     n50,
+				NMisses: nmiss,
+			}).value0()
+
+			realAcc = math.Max(0.0, realAcc)
+		case 2:
+			ncircles = nobjects
+		default:
+			panic("unsupported score")
+		}
 	}
 
 	/* global values --------------------------------------- */
@@ -194,26 +202,56 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 			math.Pow(pp.Acc, 1.1),
 		1.0/1.1) * finalMultiplier
 
-
+	return *pp
 }
 
 // PPv2WithMods calculates the pp of the map with the mods passed and acc passed
 func (pp *PPv2) PPv2WithMods(aimStars, speedStars float64, b *Map, mods, n300, n100, n50, nmiss, combo int) {
 	pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
 		len(b.Objects), b.Mode, mods, combo, n300, n100, n50, nmiss,
-		b.AR, b.OD, 1, b)
+		b.AR, b.OD, 1, b, -1)
 }
 
 // PPv2ssWithMods calculates the pp of the map with the mods passed and 100% acc
 func (pp *PPv2) PPv2ssWithMods(aimStars, speedStars float64, b *Map, mods int) {
 	pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
 		len(b.Objects), b.Mode, mods, -1, -1, 0, 0, 0,
-		b.AR, b.OD, 1, b)
+		b.AR, b.OD, 1, b, -1)
 }
 
 // PPv2ss calculates the pp of the map with nomods and 100% acc
 func (pp *PPv2) PPv2ss(aimStars, speedStars float64, b *Map) {
 	pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
 		len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
-		b.AR, b.OD, 1, b)
+		b.AR, b.OD, 1, b, -1)
+}
+
+// MultiAccPP returns the PP for every acc step
+type MultiAccPP struct {
+	P95   float64
+	P98   float64
+	P99   float64
+	P99p5 float64
+	P100  float64
+}
+
+// PPv2StepWithMods calculates the pp of the map with the mods passed and step acc
+func (pp *PPv2) PPv2StepWithMods(aimStars, speedStars float64, b *Map, mods int) MultiAccPP {
+	return MultiAccPP{
+		P95: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
+			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			b.AR, b.OD, 1, b, 0.95).Total,
+		P98: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
+			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			b.AR, b.OD, 1, b, 0.98).Total,
+		P99: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
+			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			b.AR, b.OD, 1, b, 0.99).Total,
+		P99p5: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
+			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			b.AR, b.OD, 1, b, 0.995).Total,
+		P100: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
+			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			b.AR, b.OD, 1, b, 1.0).Total,
+	}
 }

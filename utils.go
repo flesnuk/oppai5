@@ -1,4 +1,4 @@
-package main
+package oppai
 
 import (
 	"fmt"
@@ -93,6 +93,10 @@ const (
 // ModsStr returns a string representation of the mods, such as HDDT
 func ModsStr(mods int) string {
 	var s string
+
+	if mods == 0 {
+		return "NOMOD"
+	}
 
 	if (mods & ModsNF) != 0 {
 		s += "NF"
