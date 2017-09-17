@@ -41,7 +41,7 @@ func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int) PP {
 
 	pp := &PPv2{}
 	pp.PPv2WithMods(diff.Aim, diff.Speed, beatmap, mods, n300, n100, n50, nmiss, combo)
-
+	diff.Beatmap.MaxCombo = beatmap.MaxCombo
 	// fmt.Printf("%s -  %s (%s - %s) [%s] mapped by %s\n\n",
 	// 	beatmap.Artist, beatmap.Title, beatmap.ArtistUnicode,
 	// 	beatmap.TitleUnicode, beatmap.Version, beatmap.Creator)

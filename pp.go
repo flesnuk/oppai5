@@ -78,7 +78,6 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 		realAcc = acc
 		accuracy = acc
 	} else {
-
 		pp.ComputedAccuracy = Accuracy{
 			N300:    n300,
 			N100:    n100,
@@ -86,7 +85,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 			NMisses: nmiss,
 		}
 
-		accuracy := pp.ComputedAccuracy.value0()
+		accuracy = pp.ComputedAccuracy.value0()
 		realAcc = accuracy
 
 		switch scoreVersion {
@@ -239,19 +238,19 @@ type MultiAccPP struct {
 func (pp *PPv2) PPv2StepWithMods(aimStars, speedStars float64, b *Map, mods int) MultiAccPP {
 	return MultiAccPP{
 		P95: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
-			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			len(b.Objects), b.Mode, mods, -1, -1, 0, 0, 0,
 			b.AR, b.OD, 1, b, 0.95).Total,
 		P98: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
-			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			len(b.Objects), b.Mode, mods, -1, -1, 0, 0, 0,
 			b.AR, b.OD, 1, b, 0.98).Total,
 		P99: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
-			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			len(b.Objects), b.Mode, mods, -1, -1, 0, 0, 0,
 			b.AR, b.OD, 1, b, 0.99).Total,
 		P99p5: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
-			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			len(b.Objects), b.Mode, mods, -1, -1, 0, 0, 0,
 			b.AR, b.OD, 1, b, 0.995).Total,
 		P100: pp.ppv2x(aimStars, speedStars, -1, b.NSliders, b.NCircles,
-			len(b.Objects), b.Mode, ModsNOMOD, -1, -1, 0, 0, 0,
+			len(b.Objects), b.Mode, mods, -1, -1, 0, 0, 0,
 			b.AR, b.OD, 1, b, 1.0).Total,
 	}
 }
