@@ -85,7 +85,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 			NMisses: nmiss,
 		}
 
-		accuracy = pp.ComputedAccuracy.value0()
+		accuracy = pp.ComputedAccuracy.Value()
 		realAcc = accuracy
 
 		switch scoreVersion {
@@ -99,7 +99,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 				N100:    n100,
 				N50:     n50,
 				NMisses: nmiss,
-			}).value0()
+			}).Value()
 
 			realAcc = math.Max(0.0, realAcc)
 		case 2:

@@ -26,7 +26,7 @@ func Acc(accPercent float64, nobjects, nmisses int) Accuracy {
 	maxacc := (&Accuracy{
 		N300:    max300,
 		NMisses: nmisses,
-	}).value0() * 100.0
+	}).Value() * 100.0
 
 	accPercent = math.Max(0.0, math.Min(maxacc, accPercent))
 
@@ -63,7 +63,7 @@ func Acc(accPercent float64, nobjects, nmisses int) Accuracy {
  */
 func (acc *Accuracy) value(nobjects int) float64 {
 	if nobjects < 0 && acc.N300 < 0 {
-		panic("either nobjects or n300 must be specified")
+		//panic("either nobjects or n300 must be specified")
 	}
 
 	n300x := acc.N300
@@ -83,6 +83,6 @@ func (acc *Accuracy) value(nobjects int) float64 {
 	return math.Max(0.0, math.Min(res, 1.0))
 }
 
-func (acc *Accuracy) value0() float64 {
+func (acc *Accuracy) Value() float64 {
 	return acc.value(-1)
 }

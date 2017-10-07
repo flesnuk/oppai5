@@ -51,7 +51,7 @@ func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int) PP {
 	// fmt.Printf("%d spacing singletaps (%.4f%%)\n\n", diff.NSingles, float64(diff.NSingles)/float64(len(beatmap.Objects))*100.0)
 	// fmt.Printf("%.2f stars (%.2f aim, %.2f speed)\n", diff.Total,
 	// 	diff.Aim, diff.Speed)
-	// fmt.Printf("%.2f%%\n", pp.ComputedAccuracy.value0()*100)
+	// fmt.Printf("%.2f%%\n", pp.ComputedAccuracy.Value()*100)
 	// fmt.Printf("%.2f aim pp\n%.2f speed pp\n%.2f acc pp\n\n",
 	// 	pp.Aim, pp.Speed, pp.Acc)
 
