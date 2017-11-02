@@ -132,7 +132,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	arBonus := 1.0
 
 	if mapstats.AR > 10.33 {
-		arBonus += 0.45 * (float64(mapstats.AR) - 10.3333)
+		arBonus += 0.45 * (float64(mapstats.AR) - 10.33)
 	} else if mapstats.AR < 8.0 {
 		lowArBonus := 0.01 * (8.0 - float64(mapstats.AR))
 
