@@ -128,6 +128,7 @@ type DiffCalc struct {
 }
 
 func (d *DiffCalc) calcIndividual(Type int) float64 {
+	d.strains = []float64{}
 
 	var strainStep = StrainStep * d.speedMul
 	var intervalEnd = strainStep
