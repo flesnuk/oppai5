@@ -247,6 +247,9 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 
 	d.Speed = math.Sqrt(d.Speed) * StarScalingFactor
 	d.Aim = math.Sqrt(d.Aim) * StarScalingFactor
+	if (mods & ModsTD) != 0 {
+		d.Aim = math.Pow(d.Aim, 0.8)
+	}
 
 	/* total stars */
 	d.Total = d.Aim + d.Speed +

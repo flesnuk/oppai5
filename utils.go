@@ -78,6 +78,7 @@ const (
 
 	ModsNF int = 1 << 0
 	ModsEZ int = 1 << 1
+	ModsTD int = 1 << 2
 	ModsHD int = 1 << 3
 	ModsHR int = 1 << 4
 	ModsDT int = 1 << 6
@@ -103,6 +104,9 @@ func ModsStr(mods int) string {
 	}
 	if (mods & ModsEZ) != 0 {
 		s += "EZ"
+	}
+	if (mods & ModsTD) != 0 {
+		s += "TD"
 	}
 	if (mods & ModsHD) != 0 {
 		s += "HD"
