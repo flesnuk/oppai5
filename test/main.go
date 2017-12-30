@@ -1,16 +1,12 @@
-// use gentest.py to generate test_suite.json file and then run this
+// use gentest.py to generate test_suite.json file and then run
+// go run main.go test_suite.go
+// the file test_suite.go should be the output from gentest.py
 package main
 
 import (
-	"encoding/json"
 	"fmt"
-	"io/ioutil"
 	"math"
-	"net/http"
-	"os/exec"
-	"strconv"
-	"strings"
-	"time"
+	"os"
 
 	oppai "github.com/flesnuk/oppai5"
 )
@@ -40,73 +36,45 @@ type Maps struct {
 }
 
 func main() {
-	var client http.Client
-	mapsBody, err := ioutil.ReadFile(jsonFile)
-	if err != nil {
-		panic("failed read json")
-	}
-	var nfails = 0
-	keys := make([]Map, 1000)
-	unique := map[Map]bool{}
+	var bmap *oppai.Map
 
-	json.Unmarshal(mapsBody, &keys)
+	// var combo, mods, miss, n50, n100, n300 int
+	var f *os.File
+	// var realPP, margin, aimPP, spePP, accPP, calcPP, marg float64
+	var margin, marg float64
+	var mypp oppai.PPv2
+	for _, key := range scores {
 
-	for j := 0; j < start; j++ {
-		unique[keys[j]] = true
-	}
+		f, _ = os.Open("test_suite/" + key.BeatmapID + ".osu")
+		bmap = oppai.Parse(f)
+		f.Close()
 
-	for i, key := range keys {
-		if unique[key] {
-			continue
-		}
-		unique[key] = true
-		if i%25 == 0 {
-			fmt.Println(i)
-		}
-		time.Sleep(time.Millisecond * msBetweenReq)
-		combo, _ := strconv.Atoi(key.Maxcombo)
-		mods, _ := strconv.Atoi(key.EnabledMods)
-		miss, _ := strconv.Atoi(key.Countmiss)
-		n50, _ := strconv.Atoi(key.Count50)
-		n100, _ := strconv.Atoi(key.Count100)
-		n300, _ := strconv.Atoi(key.Count300)
-
-		resp, err := client.Get(urlPrefix + key.BeatmapID)
-		if err != nil {
-			panic("client get url fail")
-		}
-		bmap := oppai.Parse(resp.Body)
-		resp.Body.Close()
-
-		realPP, _ := strconv.ParseFloat(key.Pp, 64)
-		margin := realPP * errorMargin
-		if realPP < 100 {
+		margin = key.Pp * errorMargin
+		if key.Pp < 100 {
 			margin *= 3
-		} else if realPP < 200 {
+		} else if key.Pp < 200 {
 			margin *= 2
-		} else if realPP < 300 {
+		} else if key.Pp < 300 {
 			margin *= 1.5
 		}
 
-		mypp := oppai.PPInfo(bmap, &oppai.Parameters{
-			Combo:  uint16(combo),
-			Mods:   uint32(mods),
-			N300:   uint16(n300),
-			N100:   uint16(n100),
-			N50:    uint16(n50),
-			Misses: uint16(miss),
+		mypp = oppai.PPInfo(bmap, &oppai.Parameters{
+			Combo:  key.Maxcombo,
+			Mods:   key.EnabledMods,
+			N300:   key.Count300,
+			N100:   key.Count100,
+			N50:    key.Count50,
+			Misses: key.Countmiss,
 		}).PP
 
-		aimPP := mypp.Aim
-		spePP := mypp.Speed
-		accPP := mypp.Acc
-		calcPP := mypp.Total
-
-		marg := math.Abs(calcPP - realPP)
+		marg = math.Abs(mypp.Total - key.Pp)
 		if marg >= margin {
-			var loliAim, loliSpe, loliAcc, loliTot float64
-			nfails++
-			if oppaiBin {
+
+			aimPP := mypp.Aim
+			spePP := mypp.Speed
+			accPP := mypp.Acc
+			calcPP := mypp.Total
+			/*
 				cmd := "curl " + urlPrefix + key.BeatmapID + " | ./oppai -" + " +" + oppai.ModsStr(mods) + " " + fmt.Sprintf("%.2f", mypp.ComputedAccuracy.Value()*100) + "% " + key.Maxcombo + "x"
 				out, _ := exec.Command("bash", "-c", cmd).Output()
 				fmt.Println(cmd)
@@ -122,23 +90,16 @@ func main() {
 				loliAccS = loliAccS[:len(loliAccS)-7]
 				loliTotS = loliTotS[:len(loliTotS)-3]
 
-				loliAim, _ = strconv.ParseFloat(loliAimS, 64)
-				loliSpe, _ = strconv.ParseFloat(loliSpeS, 64)
-				loliAcc, _ = strconv.ParseFloat(loliAccS, 64)
-				loliTot, _ = strconv.ParseFloat(loliTotS, 64)
+				loliAim, _ := strconv.ParseFloat(loliAimS, 64)
+				loliSpe, _ := strconv.ParseFloat(loliSpeS, 64)
+				loliAcc, _ := strconv.ParseFloat(loliAccS, 64)
+				loliTot, _ := strconv.ParseFloat(loliTotS, 64) */
 
-			}
-			fmt.Printf("Real PP: %.4f calc PP: %.4f Aim: %.2f Spe: %.2f Acc: %.2f Mods: %-6s BID: %-7s\n",
-				realPP, calcPP, aimPP, spePP, accPP, oppai.ModsStr(mods), key.BeatmapID)
-
-			if oppaiBin {
-				fmt.Printf("OPPAI-NG %.4f ----------------- Aim: %.2f Spe: %.2f Acc: %.2f\n",
-					loliTot, loliAim, loliSpe, loliAcc)
-			}
+			fmt.Printf("Real PP: %.4f calc PP: %.4f Aim: %.2f Spe: %.2f Acc: %.2f BID: %-7s\n",
+				key.Pp, calcPP, aimPP, spePP, accPP, key.BeatmapID)
+			// fmt.Printf("OPPAI-NG %.4f ----------------- Aim: %.2f Spe: %.2f Acc: %.2f\n",
+			// 	loliTot, loliAim, loliSpe, loliAcc)
 		}
 
 	}
-	fmt.Println(float32(nfails) / float32(len(keys)) * 100)
-	fmt.Println(nfails)
-	fmt.Println(len(keys))
 }

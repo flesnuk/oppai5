@@ -50,6 +50,15 @@ func parseDouble(s string) float64 {
 	return f
 }
 
+func pow(a, b float64) float64 {
+	if a == 1.52163 {
+		return math.Exp(b * 0.4197821287029574)
+	} else if a == 0.97 {
+		return math.Exp(b * -0.030459207484708574)
+	}
+	return math.Exp(b * math.Log(a))
+}
+
 func parseInt(s string) int {
 	i, err := strconv.ParseInt(s, 10, 32)
 	if err != nil {

@@ -16,8 +16,8 @@ type Map struct {
 	SV, TickRate                  float32
 	MaxCombo                      int
 
-	Objects []HitObject
-	TPoints []Timing
+	Objects []*HitObject
+	TPoints []*Timing
 }
 
 func (m *Map) maxCombo() int {
@@ -26,15 +26,15 @@ func (m *Map) maxCombo() int {
 	tnext := math.Inf(-1)
 	var pxPerBeat float64
 
-	for _, obj := range m.Objects {
-		if (obj.Type & ObjSlider) == 0 {
+	for i := 0; i < len(m.Objects); i++ {
+		if (m.Objects[i].Type & ObjSlider) == 0 {
 			res++ // non-sliders add 1 combo
 			continue
 		}
 
 		/* keep track of the current timing point without
 		   looping through all of them for every object */
-		for obj.Time >= tnext {
+		for m.Objects[i].Time >= tnext {
 			tindex++
 
 			if len(m.TPoints) > tindex+1 {
@@ -55,7 +55,7 @@ func (m *Map) maxCombo() int {
 		}
 
 		/* slider, we need to calculate slider ticks */
-		sl := obj.Data.(Slider)
+		sl := m.Objects[i].Data.(Slider)
 
 		var numBeats float64
 		numBeats = (sl.distance * float64(sl.repetitions)) / pxPerBeat

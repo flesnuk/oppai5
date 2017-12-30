@@ -62,7 +62,7 @@ var PlayfieldCenter = Vector2{
 func dSpacingWeight(Type int, distance float64) float64 {
 	switch Type {
 	case DiffAim:
-		return math.Pow(distance, 0.99)
+		return pow(distance, 0.99)
 	case DiffSpeed:
 		if distance > SingleSpacing {
 			return 2.5
@@ -90,7 +90,7 @@ func dSpacingWeight(Type int, distance float64) float64 {
 func dStrain(Type int, obj *HitObject, prev HitObject, speedMul float64) {
 	var value float64
 	timeElapsed := (obj.Time - prev.Time) / speedMul
-	var decay = math.Pow(DecayBase[Type], timeElapsed/1000.0)
+	var decay = pow(DecayBase[Type], timeElapsed/1000.0)
 
 	if (obj.Type & (ObjSlider | ObjCircle)) != 0 {
 		var distance = obj.Normpos.sub(prev.Normpos).len()
@@ -128,7 +128,7 @@ type DiffCalc struct {
 }
 
 func (d *DiffCalc) calcIndividual(Type int) float64 {
-	d.strains = []float64{}
+	d.strains = make([]float64, 0, 256)
 
 	var strainStep = StrainStep * d.speedMul
 	var intervalEnd = strainStep
@@ -136,11 +136,11 @@ func (d *DiffCalc) calcIndividual(Type int) float64 {
 
 	// calculate all strains
 	for i := 0; i < len(d.Beatmap.Objects); i++ {
-		var obj = &d.Beatmap.Objects[i]
+		var obj = d.Beatmap.Objects[i]
 
 		var prev *HitObject
 		if i > 0 {
-			prev = &d.Beatmap.Objects[i-1]
+			prev = d.Beatmap.Objects[i-1]
 		}
 
 		if prev != nil {
@@ -156,7 +156,7 @@ func (d *DiffCalc) calcIndividual(Type int) float64 {
 				   interval and use that as the initial max
 				   strain */
 
-				var decay = math.Pow(DecayBase[Type],
+				var decay = pow(DecayBase[Type],
 					(intervalEnd-prev.Time)/1000.0)
 				maxStrain = prev.Strains[Type] * decay
 			} else {
@@ -221,7 +221,7 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 
 	/* calculate normalized positions */
 	for i := 0; i < len(d.Beatmap.Objects); i++ {
-		obj := &d.Beatmap.Objects[i]
+		obj := d.Beatmap.Objects[i]
 		if (obj.Type & ObjSpinner) != 0 {
 			obj.Normpos = Vector2(normalizedCenter)
 
@@ -248,7 +248,7 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 	d.Speed = math.Sqrt(d.Speed) * StarScalingFactor
 	d.Aim = math.Sqrt(d.Aim) * StarScalingFactor
 	if (mods & ModsTD) != 0 {
-		d.Aim = math.Pow(d.Aim, 0.8)
+		d.Aim = pow(d.Aim, 0.8)
 	}
 
 	/* total stars */

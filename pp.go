@@ -9,7 +9,7 @@ import (
 
 /* base pp value for stars, used internally by ppv2 */
 func ppBase(stars float64) float64 {
-	return math.Pow(5.0*math.Max(1.0, stars/0.0675)-4.0, 3.0) /
+	return pow(5.0*math.Max(1.0, stars/0.0675)-4.0, 3.0) /
 		100000.0
 }
 
@@ -117,9 +117,9 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 		lengthBonus += math.Log10(nobjectsOver2k) * 0.5
 	}
 
-	missPenalty := math.Pow(0.97, float64(nmiss))
-	comboBreak := math.Pow(float64(combo), 0.8) /
-		math.Pow(float64(maxCombo), 0.8)
+	missPenalty := pow(0.97, float64(nmiss))
+	comboBreak := pow(float64(combo), 0.8) /
+		pow(float64(maxCombo), 0.8)
 
 	/* calculate stats with mods */
 	mapstats := &MapStats{
@@ -173,10 +173,10 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	pp.Speed *= odBonus
 
 	/* acc pp ---------------------------------------------- */
-	pp.Acc = math.Pow(1.52163, float64(mapstats.OD)) *
-		math.Pow(realAcc, 24.0) * 2.83
+	pp.Acc = pow(1.52163, float64(mapstats.OD)) *
+		pow(realAcc, 24.0) * 2.83
 
-	pp.Acc *= math.Min(1.15, math.Pow(float64(ncircles)/1000.0, 0.3))
+	pp.Acc *= math.Min(1.15, pow(float64(ncircles)/1000.0, 0.3))
 
 	if (mods & ModsHD) != 0 {
 		pp.Acc *= 1.02
@@ -196,9 +196,9 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 		finalMultiplier *= 0.95
 	}
 
-	pp.Total = math.Pow(
-		math.Pow(pp.Aim, 1.1)+math.Pow(pp.Speed, 1.1)+
-			math.Pow(pp.Acc, 1.1),
+	pp.Total = pow(
+		pow(pp.Aim, 1.1)+pow(pp.Speed, 1.1)+
+			pow(pp.Acc, 1.1),
 		1.0/1.1) * finalMultiplier
 
 	return *pp

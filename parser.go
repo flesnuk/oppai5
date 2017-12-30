@@ -12,7 +12,6 @@ import (
 // Parser for storing the status of parsing
 type Parser struct {
 	lastline string // last lines touched
-	nline    int
 	lastpos  string
 	done     bool
 	Beatmap  *Map
@@ -20,9 +19,8 @@ type Parser struct {
 }
 
 func (p *Parser) setlastpos(v string) string {
-	v = strings.TrimSpace(v)
-	p.lastpos = v
-	return v
+	p.lastpos = strings.TrimSpace(v)
+	return p.lastpos
 }
 
 func (p *Parser) property() []string {
@@ -99,7 +97,7 @@ func (p *Parser) timing() {
 		t.Change = !(strings.TrimSpace(s[6]) == "0")
 	}
 
-	p.Beatmap.TPoints = append(p.Beatmap.TPoints, t)
+	p.Beatmap.TPoints = append(p.Beatmap.TPoints, &t)
 }
 
 func (p *Parser) objects() {
@@ -117,18 +115,17 @@ func (p *Parser) objects() {
 
 	if (obj.Type & ObjCircle) != 0 {
 		p.Beatmap.NCircles++
-		c := Circle{
+		obj.Data = Circle{
 			pos: Vector2{
 				X: parseDouble(p.setlastpos(s[0])),
 				Y: parseDouble(p.setlastpos(s[1])),
 			},
 		}
-		obj.Data = c
 	} else if (obj.Type & ObjSpinner) != 0 {
 		p.Beatmap.NSpinners++
 	} else if (obj.Type & ObjSlider) != 0 {
 		p.Beatmap.NSliders++
-		sli := Slider{
+		obj.Data = Slider{
 			pos: Vector2{
 				X: parseDouble(p.setlastpos(s[0])),
 				Y: parseDouble(p.setlastpos(s[1])),
@@ -136,9 +133,8 @@ func (p *Parser) objects() {
 			repetitions: parseInt(p.setlastpos(s[6])),
 			distance:    parseDouble(p.setlastpos(s[7])),
 		}
-		obj.Data = sli
 	}
-	p.Beatmap.Objects = append(p.Beatmap.Objects, obj)
+	p.Beatmap.Objects = append(p.Beatmap.Objects, &obj)
 }
 
 // Map returns the beatmap info
@@ -149,7 +145,6 @@ func (p *Parser) Map(reader io.Reader) *Map {
 	for scanner.Scan() {
 		line = scanner.Text()
 		p.lastline = line
-		p.nline++
 
 		if strings.HasPrefix(line, " ") ||
 			strings.HasPrefix(line, "_") {
