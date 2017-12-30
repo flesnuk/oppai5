@@ -12,22 +12,17 @@ import (
 // Parser for storing the status of parsing
 type Parser struct {
 	lastline string // last lines touched
-	lastpos  string
-	done     bool
 	Beatmap  *Map
 	section  string
 }
 
-func (p *Parser) setlastpos(v string) string {
-	p.lastpos = strings.TrimSpace(v)
-	return p.lastpos
-}
+func trimSpace(s string) string { return strings.TrimSpace(s) }
 
 func (p *Parser) property() []string {
 	split := strings.SplitN(p.lastline, ":", 2)
-	split[0] = p.setlastpos(split[0])
+	split[0] = trimSpace(split[0])
 	if len(split) > 1 {
-		split[1] = p.setlastpos(split[1])
+		split[1] = trimSpace(split[1])
 	}
 	return split
 }
@@ -66,17 +61,17 @@ func (p *Parser) difficulty() {
 
 	switch pr[0] {
 	case "CircleSize":
-		p.Beatmap.CS = parseFloat(p.setlastpos(pr[1]))
+		p.Beatmap.CS = parseFloat(trimSpace(pr[1]))
 	case "OverallDifficulty":
-		p.Beatmap.OD = parseFloat(p.setlastpos(pr[1]))
+		p.Beatmap.OD = parseFloat(trimSpace(pr[1]))
 	case "ApproachRate":
-		p.Beatmap.AR = parseFloat(p.setlastpos(pr[1]))
+		p.Beatmap.AR = parseFloat(trimSpace(pr[1]))
 	case "HPDrainRate":
-		p.Beatmap.HP = parseFloat(p.setlastpos(pr[1]))
+		p.Beatmap.HP = parseFloat(trimSpace(pr[1]))
 	case "SliderMultiplier":
-		p.Beatmap.SV = parseFloat(p.setlastpos(pr[1]))
+		p.Beatmap.SV = parseFloat(trimSpace(pr[1]))
 	case "SliderTickRate":
-		p.Beatmap.TickRate = parseFloat(p.setlastpos(pr[1]))
+		p.Beatmap.TickRate = parseFloat(trimSpace(pr[1]))
 
 	}
 }
@@ -89,12 +84,12 @@ func (p *Parser) timing() {
 	}
 
 	t := Timing{
-		Time:      parseDouble(p.setlastpos(s[0])),
-		MsPerBeat: parseDouble(p.setlastpos(s[1])),
+		Time:      parseDouble(s[0]),
+		MsPerBeat: parseDouble(s[1]),
 	}
 
 	if len(s) >= 7 {
-		t.Change = !(strings.TrimSpace(s[6]) == "0")
+		t.Change = !(s[6] == "0")
 	}
 
 	p.Beatmap.TPoints = append(p.Beatmap.TPoints, &t)
@@ -108,8 +103,8 @@ func (p *Parser) objects() {
 	}
 
 	obj := HitObject{
-		Time:    parseDouble(p.setlastpos(s[2])),
-		Type:    parseInt(p.setlastpos(s[3])),
+		Time:    parseDouble(s[2]),
+		Type:    parseInt(s[3]),
 		Strains: []float64{0.0, 0.0},
 	}
 
@@ -117,8 +112,8 @@ func (p *Parser) objects() {
 		p.Beatmap.NCircles++
 		obj.Data = Circle{
 			pos: Vector2{
-				X: parseDouble(p.setlastpos(s[0])),
-				Y: parseDouble(p.setlastpos(s[1])),
+				X: parseDouble(s[0]),
+				Y: parseDouble(s[1]),
 			},
 		}
 	} else if (obj.Type & ObjSpinner) != 0 {
@@ -127,11 +122,11 @@ func (p *Parser) objects() {
 		p.Beatmap.NSliders++
 		obj.Data = Slider{
 			pos: Vector2{
-				X: parseDouble(p.setlastpos(s[0])),
-				Y: parseDouble(p.setlastpos(s[1])),
+				X: parseDouble(s[0]),
+				Y: parseDouble(s[1]),
 			},
-			repetitions: parseInt(p.setlastpos(s[6])),
-			distance:    parseDouble(p.setlastpos(s[7])),
+			repetitions: parseInt(s[6]),
+			distance:    parseDouble(s[7]),
 		}
 	}
 	p.Beatmap.Objects = append(p.Beatmap.Objects, &obj)
@@ -181,6 +176,5 @@ func (p *Parser) Map(reader io.Reader) *Map {
 		}
 
 	}
-	p.done = true
 	return p.Beatmap
 }
