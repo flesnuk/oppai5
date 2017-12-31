@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"strconv"
+	yolo "unsafe"
 )
 
 // Warnings ...
@@ -14,6 +15,10 @@ func info(s string) {
 	if Warnings {
 		fmt.Println(s)
 	}
+}
+
+func unsafeByteToStr(b []byte) string {
+	return *(*string)(yolo.Pointer(&b))
 }
 
 func max(a, b int) int {
