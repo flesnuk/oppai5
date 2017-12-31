@@ -95,16 +95,15 @@ func (p *Parser) timing() {
 	p.Beatmap.TPoints = append(p.Beatmap.TPoints, &t)
 }
 
-func (p *Parser) objects() {
-	s := strings.Split(p.lastline, ",")
-
-	if len(s) > 11 {
-		info("object with trailing values")
-	}
+func (p *Parser) objects(s *ObjScanner) {
+	t0 := parseDouble(unsafeByteToStr(s.GetField()))
+	t1 := parseDouble(unsafeByteToStr(s.GetField()))
+	t2 := parseDouble(unsafeByteToStr(s.GetField()))
+	t3 := parseInt(unsafeByteToStr(s.GetField()))
 
 	obj := HitObject{
-		Time:    parseDouble(s[2]),
-		Type:    parseInt(s[3]),
+		Time:    t2,
+		Type:    t3,
 		Strains: []float64{0.0, 0.0},
 	}
 
@@ -112,21 +111,23 @@ func (p *Parser) objects() {
 		p.Beatmap.NCircles++
 		obj.Data = Circle{
 			pos: Vector2{
-				X: parseDouble(s[0]),
-				Y: parseDouble(s[1]),
+				X: t0,
+				Y: t1,
 			},
 		}
 	} else if (obj.Type & ObjSpinner) != 0 {
 		p.Beatmap.NSpinners++
 	} else if (obj.Type & ObjSlider) != 0 {
+		s.GetField()
+		s.GetField()
 		p.Beatmap.NSliders++
 		obj.Data = Slider{
 			pos: Vector2{
-				X: parseDouble(s[0]),
-				Y: parseDouble(s[1]),
+				X: t0,
+				Y: t1,
 			},
-			repetitions: parseInt(s[6]),
-			distance:    parseDouble(s[7]),
+			repetitions: parseInt(unsafeByteToStr(s.GetField())),
+			distance:    parseDouble(unsafeByteToStr(s.GetField())),
 		}
 	}
 	p.Beatmap.Objects = append(p.Beatmap.Objects, &obj)
@@ -135,7 +136,7 @@ func (p *Parser) objects() {
 // Map returns the beatmap info
 func (p *Parser) Map(reader io.Reader) *Map {
 	var line string
-
+	objScanner := &ObjScanner{}
 	scanner := bufio.NewScanner(reader)
 	for scanner.Scan() {
 		line = scanner.Text()
@@ -172,7 +173,8 @@ func (p *Parser) Map(reader io.Reader) *Map {
 		case "TimingPoints":
 			p.timing()
 		case "HitObjects":
-			p.objects()
+			objScanner.SetSource(scanner.Bytes())
+			p.objects(objScanner)
 		}
 
 	}
