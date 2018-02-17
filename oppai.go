@@ -30,7 +30,8 @@ func PPInfo(beatmap *Map, p *Parameters) PP {
 	} else {
 		pp = getPP(beatmap, 0, -1, 0, 0, 0, -1)
 	}
-
+	maxcombo := pp.Diff.Beatmap.MaxCombo
+	pp.Diff.Beatmap = Map{MaxCombo: maxcombo}
 	return pp
 
 }
