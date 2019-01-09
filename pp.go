@@ -151,14 +151,18 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	pp.Aim *= arBonus
 
 	if (mods & ModsHD) != 0 {
-		pp.Aim *= 1.18
+		/* 1.04f bonus for AR10, 1.06f for AR9, 1.02f for AR11 */
+		pp.Aim *= 1.02 + (11.0 - mapstats.AR) / 50.0
 	}
 
 	if (mods & ModsFL) != 0 {
 		pp.Aim *= 1.45 * lengthBonus
 	}
-
+	
+	/* acc bonus (bad aim can lead to bad acc, reused in speed) */
 	accBonus := 0.5 + accuracy/2.0
+	
+	/* od bonus (high od requires better aim timing to acc, reuse in spd) */
 	odBonus := float64(0.98 + (mapstats.OD*mapstats.OD)/2500.0)
 
 	pp.Aim *= accBonus
@@ -171,6 +175,10 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	pp.Speed *= comboBreak
 	pp.Speed *= accBonus
 	pp.Speed *= odBonus
+	
+	if (mods & ModsHD) != 0 {
+		pp.Speed *= 1.18
+	}
 
 	/* acc pp ---------------------------------------------- */
 	pp.Acc = pow(1.52163, float64(mapstats.OD)) *
