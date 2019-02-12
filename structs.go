@@ -18,8 +18,11 @@ type HitObject struct {
 	Type     int     //an instance of Circle or Slider or null
 	Data     interface{}
 	Normpos  Vector2
+	Angle 	 float64
 	Strains  []float64
 	IsSingle bool
+	DeltaTime	float64
+	DDistance	float64
 }
 
 // Timing is used in Map for timing points

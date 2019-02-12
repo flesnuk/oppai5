@@ -180,3 +180,56 @@ func (p *Parser) Map(reader io.Reader) *Map {
 	}
 	return p.Beatmap
 }
+
+// Map returns the beatmap info
+func (p *Parser) MapbyNum(reader io.Reader, objnum int) *Map {
+	num := objnum
+	var line string
+	objScanner := &ObjScanner{}
+	scanner := bufio.NewScanner(reader)
+	for scanner.Scan() {
+		line = scanner.Text()
+		p.lastline = line
+
+		if strings.HasPrefix(line, " ") ||
+			strings.HasPrefix(line, "_") {
+			continue
+		}
+
+		p.lastline = strings.TrimSpace(line)
+		line = p.lastline
+		if len(line) <= 0 {
+			continue
+		}
+
+		if strings.HasPrefix(line, "//") {
+			continue
+		}
+
+		// [SectionName]
+		if strings.HasPrefix(line, "[") {
+			p.section = line[1 : len(line)-1]
+			continue
+		}
+
+		switch p.section {
+		case "Metadata":
+			p.metadata()
+		case "General":
+			p.general()
+		case "Difficulty":
+			p.difficulty()
+		case "TimingPoints":
+			p.timing()
+		case "HitObjects":
+			objScanner.SetSource(scanner.Bytes())
+			p.objects(objScanner)
+			num -= 1
+			if num == 0 {
+				return p.Beatmap
+			}
+		}
+	}
+	return p.Beatmap
+}
+
