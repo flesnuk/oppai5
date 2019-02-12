@@ -2,7 +2,6 @@ package oppai
 
 import (
 	"math"
-	"fmt"
 )
 
 /* ------------------------------------------------------------- */
@@ -210,9 +209,6 @@ func (d *DiffCalc) calcIndividual(Type int) diffValues {
 
 		if prev != nil {
 			dStrain(Type, obj, *prev, d.speedMul)
-			if i <= 30 {
-				println("bbbb", fmt.Sprintf("%.13f", prev.Strains[Type]))
-			}
 		}
 
 		for obj.Time > intervalEnd {
@@ -227,9 +223,6 @@ func (d *DiffCalc) calcIndividual(Type int) diffValues {
 				var decay = math.Pow(DecayBase[Type],
 					(intervalEnd-prev.Time)/1000.0)
 				maxStrain = prev.Strains[Type] * decay
-				//println("cccc", i, fmt.Sprintf("%.13f", maxStrain),
-				//	fmt.Sprintf("%.13f", prev.Strains[Type]),
-				//	fmt.Sprintf("%.13f", decay))
 			} else {
 				maxStrain = 0.0
 			}
@@ -250,11 +243,8 @@ func (d *DiffCalc) calcIndividual(Type int) diffValues {
 	for _, strain := range d.strains {
 		total += math.Pow(strain, 1.2)
 		difficulty += strain * weight
-		//println("aaaa", fmt.Sprintf("%.8f", difficulty), fmt.Sprintf("%.8f", strain), fmt.Sprintf("%.8f", weight))
 		weight *= DecayWeight
 	}
-
-	println("true speed", fmt.Sprintf("%.8f", difficulty), fmt.Sprintf("%.8f", total))
 
 	return diffValues{difficulty, total}
 }
@@ -346,8 +336,6 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 
 	d.Aim = math.Sqrt(d.Aim) * StarScalingFactor
 	d.Speed = math.Sqrt(d.Speed) * StarScalingFactor
-
-	println("true speed", fmt.Sprintf("%.8f", d.Speed))
 
 	if (mods & ModsTD) != 0 {
 		d.Aim = pow(d.Aim, 0.8)
