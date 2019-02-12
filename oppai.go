@@ -2,6 +2,7 @@ package oppai
 
 import (
 	"io"
+	"fmt"
 )
 
 // Parameters for the PPInfo function
@@ -38,7 +39,7 @@ func PPInfo(beatmap *Map, p *Parameters) PP {
 
 func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int) PP {
 
-	diff := (&DiffCalc{}).calcMapWithMods(*beatmap, mods)
+	diff := (&DiffCalc{}).CalcMapWithMods(*beatmap, mods)
 
 	pp := &PPv2{}
 	pp.PPv2WithMods(diff.Aim, diff.Speed, beatmap, mods, n300, n100, n50, nmiss, combo)
@@ -47,16 +48,16 @@ func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int) PP {
 	// 	beatmap.Artist, beatmap.Title, beatmap.ArtistUnicode,
 	// 	beatmap.TitleUnicode, beatmap.Version, beatmap.Creator)
 	// fmt.Printf("%d circles, %d sliders, %d spinners\n",
-	// 	beatmap.NCircles, beatmap.NSliders, beatmap.NSpinners)
+	//	beatmap.NCircles, beatmap.NSliders, beatmap.NSpinners)
 	// fmt.Printf("%d/%dx\n", combo, beatmap.maxCombo())
 	// fmt.Printf("%d spacing singletaps (%.4f%%)\n\n", diff.NSingles, float64(diff.NSingles)/float64(len(beatmap.Objects))*100.0)
 	// fmt.Printf("%.2f stars (%.2f aim, %.2f speed)\n", diff.Total,
-	// 	diff.Aim, diff.Speed)
+	//	diff.Aim, diff.Speed)
 	// fmt.Printf("%.2f%%\n", pp.ComputedAccuracy.Value()*100)
 	// fmt.Printf("%.2f aim pp\n%.2f speed pp\n%.2f acc pp\n\n",
-	// 	pp.Aim, pp.Speed, pp.Acc)
+	//	pp.Aim, pp.Speed, pp.Acc)
 
-	// fmt.Printf("%.2f pp\n", pp.Total)
+	fmt.Printf("%.2f pp\n", pp.Total)
 	return PP{
 		PP:     *pp,
 		Stats:  *diff.mapStats,
@@ -70,5 +71,12 @@ func Parse(f io.Reader) *Map {
 	parser := &Parser{}
 	parser.Beatmap = &Map{}
 	parser.Map(f)
+	return parser.Beatmap
+}
+
+func ParsebyNum(f io.Reader, objnum int) *Map {
+	parser := &Parser{}
+	parser.Beatmap = &Map{}
+	parser.MapbyNum(f, objnum)
 	return parser.Beatmap
 }

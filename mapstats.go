@@ -14,8 +14,8 @@ type MapStats struct {
 
 // stats constants
 const (
-	OD0MS  float64 = 79.5
-	OD10MS float64 = 19.5
+	OD0MS  float64 = 80.0
+	OD10MS float64 = 20.0
 	AR0MS  float64 = 1800.0
 	AR5MS  float64 = 1200.0
 	AR10MS float64 = 450.0

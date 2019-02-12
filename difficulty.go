@@ -1,6 +1,9 @@
 package oppai
 
-import "math"
+import (
+	"math"
+	"fmt"
+)
 
 /* ------------------------------------------------------------- */
 /* difficulty calculator                                         */
@@ -14,7 +17,6 @@ const (
 	 * arbitrary thresholds to determine when a stream is spaced
 	 * enough that it becomes hard to alternate.
 	 */
-	StreamSpacing float64 = 110.0
 	SingleSpacing float64 = 125.0
 
 	/**
@@ -45,6 +47,13 @@ const (
 	 * star rating to compensate for aim/speed only maps
 	 */
 	ExtremeScalingFactor float64 = 0.5
+
+	MinSpeedBonus float64 = 75.0
+	MaxSpeedBonus float64 = 45.0
+	AngleBonusScale float64 = 90.0
+	AimTimingThreshold float64 = 107.0
+	SpeedAngleBonusBegin float64 = 5 * math.Pi / 6
+	AimAngleBonusBegin float64 = math.Pi / 3
 )
 
 // DecayBase : strain decay per interval.
@@ -59,25 +68,54 @@ var PlayfieldCenter = Vector2{
 	Y: PlayfieldHeight / 2.0,
 }
 
-func dSpacingWeight(Type int, distance float64) float64 {
+func dSpacingWeight(Type int, distance float64, delta_time float64,
+	prev_distance float64, prev_delta_time float64, angle float64) float64 {
+	strain_time := math.Max(delta_time, 50.0)
+	prev_strain_time := math.Max(prev_delta_time, 50.0)
+	var angle_bonus float64
 	switch Type {
 	case DiffAim:
-		return pow(distance, 0.99)
-	case DiffSpeed:
-		if distance > SingleSpacing {
-			return 2.5
-		} else if distance > StreamSpacing {
-			return 1.6 + 0.9*(distance-StreamSpacing)/
-				(SingleSpacing-StreamSpacing)
-		} else if distance > AlmostDiameter {
-			return 1.2 + 0.4*(distance-AlmostDiameter)/
-				(StreamSpacing-AlmostDiameter)
-		} else if distance > (AlmostDiameter / 2.0) {
-			return 0.95 + 0.25*
-				(distance-AlmostDiameter/2.0)/
-				(AlmostDiameter/2.0)
+		result := 0.0
+		if !math.IsNaN(angle) && angle > AimAngleBonusBegin {
+			angle_bonus = math.Sqrt(
+				math.Max(prev_distance - AngleBonusScale, 0.0) *
+				math.Pow(math.Sin(angle - AimAngleBonusBegin), 2.0) *
+				math.Max(distance - AngleBonusScale, 0.0))
+			result = 1.5 * math.Pow(math.Max(0.0, angle_bonus), 0.99) /
+				math.Max(AimTimingThreshold, prev_strain_time)
 		}
-		return 0.95
+		weighted_distance := math.Pow(distance, 0.99)
+		return math.Max(result +
+			weighted_distance /
+			math.Max(AimTimingThreshold, strain_time),
+			weighted_distance / strain_time)
+	case DiffSpeed:
+		distance := math.Min(distance, SingleSpacing)
+		delta_time := math.Max(delta_time, MaxSpeedBonus)
+		speed_bonus := 1.0
+		if delta_time < MinSpeedBonus {
+			speed_bonus += math.Pow((MinSpeedBonus - delta_time) / 40.0, 2.0)
+		}
+		angle_bonus := 1.0
+		if !math.IsNaN(angle) && angle < SpeedAngleBonusBegin  {
+			s := math.Sin(1.5 * (SpeedAngleBonusBegin - angle))
+			angle_bonus += math.Pow(s, 2) / 3.57
+			if angle < math.Pi / 2.0 {
+				angle_bonus = 1.28
+				if distance < AngleBonusScale && angle < math.Pi / 4.0 {
+					angle_bonus += (1.0 - angle_bonus) *
+						math.Min((AngleBonusScale - distance) / 10.0, 1.0)
+				}else if distance < AngleBonusScale {
+					angle_bonus += (1.0 - angle_bonus) *
+						math.Min((AngleBonusScale - distance) / 10.0, 1.0) *
+						math.Sin((math.Pi / 2.0 - angle) * 4.0 / math.Pi)
+				}
+			}
+		}
+		return (
+			(1.0 + (speed_bonus - 1.0) * 0.75) * angle_bonus *
+			(0.95 + speed_bonus * math.Pow(distance / SingleSpacing, 3.5))) /
+			strain_time
 	}
 	panic("this diff type does not exist")
 }
@@ -90,19 +128,22 @@ func dSpacingWeight(Type int, distance float64) float64 {
 func dStrain(Type int, obj *HitObject, prev HitObject, speedMul float64) {
 	var value float64
 	timeElapsed := (obj.Time - prev.Time) / speedMul
-	var decay = pow(DecayBase[Type], timeElapsed/1000.0)
+	var decay = pow(DecayBase[Type], timeElapsed / 1000.0)
+
+	obj.DeltaTime = timeElapsed
 
 	if (obj.Type & (ObjSlider | ObjCircle)) != 0 {
 		var distance = obj.Normpos.sub(prev.Normpos).len()
+		obj.DDistance = distance
 
 		if Type == DiffSpeed {
 			obj.IsSingle = distance > SingleSpacing
 		}
 
-		value = dSpacingWeight(Type, distance)
+		value = dSpacingWeight(Type, obj.DDistance, timeElapsed,
+			prev.DDistance, prev.DeltaTime, obj.Angle)
 		value *= WeightScaling[Type]
 	}
-	value /= math.Max(timeElapsed, 50.0)
 	obj.Strains[Type] = prev.Strains[Type]*decay + value
 }
 
@@ -110,7 +151,21 @@ func dStrain(Type int, obj *HitObject, prev HitObject, speedMul float64) {
 type DiffCalc struct {
 	Total float64 // star rating
 	Aim   float64 // aim stars
+
+	/** aim difficulty (used to calc length bonus) */
+	AimDifficulty float64
+
+	/** aim length bonus (unused at the moment) */
+	AimLengthBonus float64
+
 	Speed float64 // speed stars
+
+	/** speed difficulty (used to calc length bonus) */
+	SpeedDifficulty float64
+
+	/** speed length bonus (unused at the moment) */
+	SpeedLengthBonus float64
+
 	/**
 	 * number of notes that are considered singletaps by the
 	 * difficulty calculator.
@@ -127,7 +182,17 @@ type DiffCalc struct {
 	mapStats          *MapStats
 }
 
-func (d *DiffCalc) calcIndividual(Type int) float64 {
+func lengthBonus(stars float64, difficulty float64) float64 {
+	return 0.32 + 0.5 *
+		(math.Log10(difficulty + stars) - math.Log10(stars))
+}
+
+type diffValues struct {
+	Difficulty	float64
+	Total 		float64
+}
+
+func (d *DiffCalc) calcIndividual(Type int) diffValues {
 	d.strains = make([]float64, 0, 256)
 
 	var strainStep = StrainStep * d.speedMul
@@ -145,6 +210,9 @@ func (d *DiffCalc) calcIndividual(Type int) float64 {
 
 		if prev != nil {
 			dStrain(Type, obj, *prev, d.speedMul)
+			if i <= 30 {
+				println("bbbb", fmt.Sprintf("%.13f", prev.Strains[Type]))
+			}
 		}
 
 		for obj.Time > intervalEnd {
@@ -156,9 +224,12 @@ func (d *DiffCalc) calcIndividual(Type int) float64 {
 				   interval and use that as the initial max
 				   strain */
 
-				var decay = pow(DecayBase[Type],
+				var decay = math.Pow(DecayBase[Type],
 					(intervalEnd-prev.Time)/1000.0)
 				maxStrain = prev.Strains[Type] * decay
+				//println("cccc", i, fmt.Sprintf("%.13f", maxStrain),
+				//	fmt.Sprintf("%.13f", prev.Strains[Type]),
+				//	fmt.Sprintf("%.13f", decay))
 			} else {
 				maxStrain = 0.0
 			}
@@ -171,16 +242,21 @@ func (d *DiffCalc) calcIndividual(Type int) float64 {
 
 	/* weight the top strains sorted from highest to lowest */
 	weight := 1.0
+	var total float64
 	var difficulty float64
 
 	reverseSortFloat64s(d.strains)
 
 	for _, strain := range d.strains {
+		total += math.Pow(strain, 1.2)
 		difficulty += strain * weight
+		//println("aaaa", fmt.Sprintf("%.8f", difficulty), fmt.Sprintf("%.8f", strain), fmt.Sprintf("%.8f", weight))
 		weight *= DecayWeight
 	}
 
-	return difficulty
+	println("true speed", fmt.Sprintf("%.8f", difficulty), fmt.Sprintf("%.8f", total))
+
+	return diffValues{difficulty, total}
 }
 
 // DefaultSingletapThreshold default value for singletap_threshold.
@@ -214,10 +290,13 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 
 	if radius < CirclesizeBuffThreshold {
 		scalingFactor *= 1.0 +
-			math.Min(CirclesizeBuffThreshold-radius, 5.0)/50.0
+			math.Min(CirclesizeBuffThreshold - radius, 5.0) / 50.0
 	}
 
 	normalizedCenter := PlayfieldCenter.mul(scalingFactor)
+
+	var prev1 *HitObject
+	var prev2 *HitObject
 
 	/* calculate normalized positions */
 	for i := 0; i < len(d.Beatmap.Objects); i++ {
@@ -238,15 +317,38 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 			}
 
 			obj.Normpos = Vector2(pos).mul(scalingFactor)
+
+			if i >= 2 {
+				v1 := Vector2(prev2.Normpos).sub(prev1.Normpos)
+				v2 := Vector2(obj.Normpos).sub(prev1.Normpos)
+				dot := v1.dot(v2)
+				det := v1.X * v2.Y - v1.Y * v2.X
+				obj.Angle = math.Abs(math.Atan2(det, dot))
+			}else {
+				obj.Angle = math.NaN()
+			}
+
+			prev2 = prev1
+			prev1 = obj
 		}
 	}
 
 	/* speed and aim stars */
-	d.Speed = d.calcIndividual(DiffSpeed)
-	d.Aim = d.calcIndividual(DiffAim)
+	aimvals := d.calcIndividual(DiffAim)
+	d.Aim = aimvals.Difficulty
+	d.AimDifficulty = aimvals.Total
+	d.AimLengthBonus = lengthBonus(d.Aim, d.AimDifficulty)
 
-	d.Speed = math.Sqrt(d.Speed) * StarScalingFactor
+	speedvals := d.calcIndividual(DiffSpeed)
+	d.Speed = speedvals.Difficulty
+	d.SpeedDifficulty = speedvals.Total
+	d.SpeedLengthBonus = lengthBonus(d.Speed, d.SpeedDifficulty)
+
 	d.Aim = math.Sqrt(d.Aim) * StarScalingFactor
+	d.Speed = math.Sqrt(d.Speed) * StarScalingFactor
+
+	println("true speed", fmt.Sprintf("%.8f", d.Speed))
+
 	if (mods & ModsTD) != 0 {
 		d.Aim = pow(d.Aim, 0.8)
 	}
@@ -278,7 +380,7 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 	return *d
 }
 
-func (d *DiffCalc) calcWithMods(mods int) DiffCalc {
+func (d *DiffCalc) CalcWithMods(mods int) DiffCalc {
 	return d.Calc(mods, DefaultSingletapThreshold)
 }
 
@@ -294,7 +396,7 @@ func (d *DiffCalc) calc3(beatmap Map, mods int,
 }
 
 // sets beatmap field and calls
-func (d *DiffCalc) calcMapWithMods(beatmap Map, mods int) DiffCalc {
+func (d *DiffCalc) CalcMapWithMods(beatmap Map, mods int) DiffCalc {
 	return d.calc3(beatmap, mods, DefaultSingletapThreshold)
 }
 

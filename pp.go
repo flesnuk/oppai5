@@ -132,15 +132,9 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	arBonus := 1.0
 
 	if mapstats.AR > 10.33 {
-		arBonus += 0.45 * (float64(mapstats.AR) - 10.33)
+		arBonus += 0.3 * (float64(mapstats.AR) - 10.33)
 	} else if mapstats.AR < 8.0 {
-		lowArBonus := 0.01 * (8.0 - float64(mapstats.AR))
-
-		if (mods & ModsHD) != 0 {
-			lowArBonus *= 2.0
-		}
-
-		arBonus += lowArBonus
+		arBonus += 0.01 * (8.0 - float64(mapstats.AR))
 	}
 
 	/* aim pp ---------------------------------------------- */
@@ -150,20 +144,27 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	pp.Aim *= comboBreak
 	pp.Aim *= arBonus
 
+	hdBonus := 1.0
 	if (mods & ModsHD) != 0 {
-		/* 1.04f bonus for AR10, 1.06f for AR9, 1.02f for AR11 */
-		pp.Aim *= 1.02 + (11.0 - mapstats.AR) / 50.0
+		hdBonus += 0.04 * (12.0 - float64(mapstats.AR))
 	}
 
+	pp.Aim *= hdBonus
+
 	if (mods & ModsFL) != 0 {
-		pp.Aim *= 1.45 * lengthBonus
+		fl_bonus := 1.0 + 0.35 * math.Min(1.0, float64(nobjects) / 200.0)
+		if nobjects > 200 {
+			fl_bonus += 0.3 * math.Min(1, (float64(nobjects) - 200.0) / 300.0)
+		}
+		if nobjects > 500 {
+			fl_bonus += (float64(nobjects) - 500.0) / 1200.0
+		}
+		pp.Aim *= fl_bonus
 	}
-	
-	/* acc bonus (bad aim can lead to bad acc, reused in speed) */
+
 	accBonus := 0.5 + accuracy/2.0
-	
-	/* od bonus (high od requires better aim timing to acc, reuse in spd) */
-	odBonus := float64(0.98 + (mapstats.OD*mapstats.OD)/2500.0)
+	od_squared := mapstats.OD*mapstats.OD
+	odBonus := float64(0.98 +  od_squared / 2500.0)
 
 	pp.Aim *= accBonus
 	pp.Aim *= odBonus
@@ -173,12 +174,13 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	pp.Speed *= lengthBonus
 	pp.Speed *= missPenalty
 	pp.Speed *= comboBreak
-	pp.Speed *= accBonus
-	pp.Speed *= odBonus
-	
-	if (mods & ModsHD) != 0 {
-		pp.Speed *= 1.18
+	if mapstats.AR > 10.33 {
+		pp.Speed *= arBonus
 	}
+	pp.Speed *= hdBonus
+
+	pp.Speed *= 0.02 + accuracy
+	pp.Speed *= 0.96 + float64(od_squared) / 1600.0
 
 	/* acc pp ---------------------------------------------- */
 	pp.Acc = pow(1.52163, float64(mapstats.OD)) *
@@ -187,7 +189,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	pp.Acc *= math.Min(1.15, pow(float64(ncircles)/1000.0, 0.3))
 
 	if (mods & ModsHD) != 0 {
-		pp.Acc *= 1.02
+		pp.Acc *= 1.08
 	}
 
 	if (mods & ModsFL) != 0 {

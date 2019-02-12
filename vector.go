@@ -23,3 +23,7 @@ func (v Vector2) mul(value float64) Vector2 {
 func (v Vector2) len() float64 {
 	return math.Sqrt(v.X*v.X + v.Y*v.Y)
 }
+
+func (v Vector2) dot(other Vector2) float64 {
+	return v.X * other.X + v.Y * other.Y
+}
