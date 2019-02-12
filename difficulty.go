@@ -1,8 +1,6 @@
 package oppai
 
-import (
-	"math"
-)
+import "math"
 
 /* ------------------------------------------------------------- */
 /* difficulty calculator                                         */
@@ -368,7 +366,7 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 	return *d
 }
 
-func (d *DiffCalc) CalcWithMods(mods int) DiffCalc {
+func (d *DiffCalc) calcWithMods(mods int) DiffCalc {
 	return d.Calc(mods, DefaultSingletapThreshold)
 }
 
@@ -384,7 +382,7 @@ func (d *DiffCalc) calc3(beatmap Map, mods int,
 }
 
 // sets beatmap field and calls
-func (d *DiffCalc) CalcMapWithMods(beatmap Map, mods int) DiffCalc {
+func (d *DiffCalc) calcMapWithMods(beatmap Map, mods int) DiffCalc {
 	return d.calc3(beatmap, mods, DefaultSingletapThreshold)
 }
 

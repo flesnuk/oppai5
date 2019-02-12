@@ -39,7 +39,7 @@ func PPInfo(beatmap *Map, p *Parameters) PP {
 
 func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int) PP {
 
-	diff := (&DiffCalc{}).CalcMapWithMods(*beatmap, mods)
+	diff := (&DiffCalc{}).calcMapWithMods(*beatmap, mods)
 
 	pp := &PPv2{}
 	pp.PPv2WithMods(diff.Aim, diff.Speed, beatmap, mods, n300, n100, n50, nmiss, combo)
