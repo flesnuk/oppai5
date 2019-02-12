@@ -181,7 +181,7 @@ func (p *Parser) Map(reader io.Reader) *Map {
 	return p.Beatmap
 }
 
-// Map returns the beatmap info
+// Map returns the beatmap info with a specified number of objects parsed
 func (p *Parser) MapbyNum(reader io.Reader, objnum int) *Map {
 	num := objnum
 	var line string

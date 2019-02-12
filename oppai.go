@@ -74,6 +74,7 @@ func Parse(f io.Reader) *Map {
 	return parser.Beatmap
 }
 
+// Parse parses the file f and returns a beatmap with a specified number of objects parsed
 func ParsebyNum(f io.Reader, objnum int) *Map {
 	parser := &Parser{}
 	parser.Beatmap = &Map{}
