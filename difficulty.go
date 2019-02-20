@@ -193,7 +193,7 @@ func (d *DiffCalc) calcIndividual(Type int) diffValues {
 	d.strains = make([]float64, 0, 256)
 
 	var strainStep = StrainStep * d.speedMul
-	var intervalEnd = strainStep
+	var intervalEnd = math.Ceil(d.Beatmap.Objects[0].Time / strainStep) * strainStep
 	var maxStrain float64
 
 	// calculate all strains
@@ -230,6 +230,8 @@ func (d *DiffCalc) calcIndividual(Type int) diffValues {
 
 		maxStrain = math.Max(maxStrain, obj.Strains[Type])
 	}
+
+	d.strains = append(d.strains, maxStrain)
 
 	/* weight the top strains sorted from highest to lowest */
 	weight := 1.0
