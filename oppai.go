@@ -44,20 +44,20 @@ func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int) PP {
 	pp := &PPv2{}
 	pp.PPv2WithMods(diff.Aim, diff.Speed, beatmap, mods, n300, n100, n50, nmiss, combo)
 	diff.Beatmap.MaxCombo = beatmap.MaxCombo
-	// fmt.Printf("%s -  %s (%s - %s) [%s] mapped by %s\n\n",
-	// 	beatmap.Artist, beatmap.Title, beatmap.ArtistUnicode,
-	// 	beatmap.TitleUnicode, beatmap.Version, beatmap.Creator)
-	// fmt.Printf("%d circles, %d sliders, %d spinners\n",
+	//fmt.Printf("%s -  %s (%s - %s) [%s] mapped by %s\n\n",
+	//	beatmap.Artist, beatmap.Title, beatmap.ArtistUnicode,
+	//	beatmap.TitleUnicode, beatmap.Version, beatmap.Creator)
+	//fmt.Printf("%d circles, %d sliders, %d spinners\n",
 	//	beatmap.NCircles, beatmap.NSliders, beatmap.NSpinners)
-	// fmt.Printf("%d/%dx\n", combo, beatmap.maxCombo())
-	// fmt.Printf("%d spacing singletaps (%.4f%%)\n\n", diff.NSingles, float64(diff.NSingles)/float64(len(beatmap.Objects))*100.0)
-	// fmt.Printf("%.2f stars (%.2f aim, %.2f speed)\n", diff.Total,
+	//fmt.Printf("%d/%dx\n", combo, beatmap.maxCombo())
+	//fmt.Printf("%d spacing singletaps (%.4f%%)\n\n", diff.NSingles, float64(diff.NSingles)/float64(len(beatmap.Objects))*100.0)
+	//fmt.Printf("%.2f stars (%.2f aim, %.2f speed)\n", diff.Total,
 	//	diff.Aim, diff.Speed)
-	// fmt.Printf("%.2f%%\n", pp.ComputedAccuracy.Value()*100)
-	// fmt.Printf("%.2f aim pp\n%.2f speed pp\n%.2f acc pp\n\n",
+	//fmt.Printf("%.2f%%\n", pp.ComputedAccuracy.Value()*100)
+	//fmt.Printf("%.2f aim pp\n%.2f speed pp\n%.2f acc pp\n\n",
 	//	pp.Aim, pp.Speed, pp.Acc)
-
-	fmt.Printf("%.2f pp\n", pp.Total)
+	//
+	//fmt.Printf("%.2f pp\n", pp.Total)
 	return PP{
 		PP:     *pp,
 		Stats:  *diff.mapStats,
