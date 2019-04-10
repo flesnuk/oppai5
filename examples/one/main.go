@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	f, err := os.Open("Rib - Yonjuunana (Finshie) [48th].osu")
+	f, err := os.Open("Halozy - Kikoku Doukoku Jigokuraku (Hollow Wings) [Notch Hell].osu")
 	if err != nil {
 		panic(err)
 	}

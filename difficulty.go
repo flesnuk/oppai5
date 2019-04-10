@@ -308,7 +308,7 @@ func (d *DiffCalc) Calc(mods int, singletapThreshold float64) DiffCalc {
 
 			obj.Normpos = Vector2(pos).mul(scalingFactor)
 
-			if i >= 2 {
+			if i >= 2 && prev2 != nil && prev1 != nil{
 				v1 := Vector2(prev2.Normpos).sub(prev1.Normpos)
 				v2 := Vector2(obj.Normpos).sub(prev1.Normpos)
 				dot := v1.dot(v2)
