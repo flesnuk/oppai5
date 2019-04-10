@@ -2,7 +2,6 @@ package oppai
 
 import (
 	"io"
-	"fmt"
 )
 
 // Parameters for the PPInfo function
