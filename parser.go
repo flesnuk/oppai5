@@ -4,232 +4,171 @@ import (
 	"bufio"
 	"io"
 	"strings"
+
+	"github.com/flesnuk/oppai5/vector"
 )
 
-/* ------------------------------------------------------------- */
-/* beatmap parser                                                */
+// https://git.sr.ht/~tdeo/pp/tree/master/parser.go
 
-// Parser for storing the status of parsing
-type Parser struct {
-	lastline string // last lines touched
-	Beatmap  *Map
-	section  string
-}
+func parse(r io.Reader, objnum int) (*Map, error) {
+	var b = &Map{}
 
-func trimSpace(s string) string { return strings.TrimSpace(s) }
+	s := bufio.NewScanner(r)
 
-func (p *Parser) property() []string {
-	split := strings.SplitN(p.lastline, ":", 2)
-	split[0] = trimSpace(split[0])
-	if len(split) > 1 {
-		split[1] = trimSpace(split[1])
-	}
-	return split
-}
+	var section string
+	var arFound bool
+	for s.Scan() {
+		t := s.Text()
 
-func (p *Parser) metadata() {
-	pr := p.property()
-	switch pr[0] {
-	case "Title":
-		p.Beatmap.Title = pr[1]
-	case "TitleUnicode":
-		p.Beatmap.TitleUnicode = pr[1]
-	case "Artist":
-		p.Beatmap.Artist = pr[1]
-	case "ArtistUnicode":
-		p.Beatmap.ArtistUnicode = pr[1]
-	case "Creator":
-		p.Beatmap.Creator = pr[1]
-	case "Version":
-		p.Beatmap.Version = pr[1]
-	}
-}
-
-func (p *Parser) general() {
-	pr := p.property()
-	if pr[0] == "Mode" {
-		p.Beatmap.Mode = parseInt(pr[1])
-
-		if p.Beatmap.Mode != ModeStd {
-			panic("this gamemode is not yet supported")
-		}
-	}
-}
-
-func (p *Parser) difficulty() {
-	pr := p.property()
-
-	switch pr[0] {
-	case "CircleSize":
-		p.Beatmap.CS = parseFloat(trimSpace(pr[1]))
-	case "OverallDifficulty":
-		p.Beatmap.OD = parseFloat(trimSpace(pr[1]))
-	case "ApproachRate":
-		p.Beatmap.AR = parseFloat(trimSpace(pr[1]))
-	case "HPDrainRate":
-		p.Beatmap.HP = parseFloat(trimSpace(pr[1]))
-	case "SliderMultiplier":
-		p.Beatmap.SV = parseFloat(trimSpace(pr[1]))
-	case "SliderTickRate":
-		p.Beatmap.TickRate = parseFloat(trimSpace(pr[1]))
-
-	}
-}
-
-func (p *Parser) timing() {
-	s := strings.Split(p.lastline, ",")
-
-	if len(s) > 8 {
-		info("timing point with trailing values")
-	}
-
-	t := Timing{
-		Time:      parseDouble(s[0]),
-		MsPerBeat: parseDouble(s[1]),
-	}
-
-	if len(s) >= 7 {
-		t.Change = !(s[6] == "0")
-	}
-
-	p.Beatmap.TPoints = append(p.Beatmap.TPoints, &t)
-}
-
-func (p *Parser) objects(s *ObjScanner) {
-	t0 := parseDouble(unsafeByteToStr(s.GetField()))
-	t1 := parseDouble(unsafeByteToStr(s.GetField()))
-	t2 := parseDouble(unsafeByteToStr(s.GetField()))
-	t3 := parseInt(unsafeByteToStr(s.GetField()))
-
-	obj := HitObject{
-		Time:    t2,
-		Type:    t3,
-		Strains: []float64{0.0, 0.0},
-	}
-
-	if (obj.Type & ObjCircle) != 0 {
-		p.Beatmap.NCircles++
-		obj.Data = Circle{
-			pos: Vector2{
-				X: t0,
-				Y: t1,
-			},
-		}
-	} else if (obj.Type & ObjSpinner) != 0 {
-		p.Beatmap.NSpinners++
-	} else if (obj.Type & ObjSlider) != 0 {
-		s.GetField()
-		s.GetField()
-		p.Beatmap.NSliders++
-		obj.Data = Slider{
-			pos: Vector2{
-				X: t0,
-				Y: t1,
-			},
-			repetitions: parseInt(unsafeByteToStr(s.GetField())),
-			distance:    parseDouble(unsafeByteToStr(s.GetField())),
-		}
-	}
-	p.Beatmap.Objects = append(p.Beatmap.Objects, &obj)
-}
-
-// Map returns the beatmap info
-func (p *Parser) Map(reader io.Reader) *Map {
-	var line string
-	objScanner := &ObjScanner{}
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line = scanner.Text()
-		p.lastline = line
-
-		if strings.HasPrefix(line, " ") ||
-			strings.HasPrefix(line, "_") {
+		if strings.HasPrefix(t, " ") || strings.HasPrefix(t, "_") {
 			continue
 		}
 
-		p.lastline = strings.TrimSpace(line)
-		line = p.lastline
-		if len(line) <= 0 {
+		t = strings.TrimSpace(t)
+
+		if strings.HasPrefix(t, "//") {
 			continue
 		}
 
-		if strings.HasPrefix(line, "//") {
+		if strings.HasPrefix(t, "[") && strings.HasSuffix(t, "]") {
+			section = t[1 : len(t)-1]
 			continue
 		}
 
-		// [SectionName]
-		if strings.HasPrefix(line, "[") {
-			p.section = line[1 : len(line)-1]
-			continue
-		}
-
-		switch p.section {
+		switch section {
 		case "Metadata":
-			p.metadata()
+			switch k, v := keyValue(t); k {
+			case "Title":
+				b.Title = v
+			case "TitleUnicode":
+				b.TitleUnicode = v
+			case "Artist":
+				b.Artist = v
+			case "ArtistUnicode":
+				b.ArtistUnicode = v
+			case "Creator":
+				b.Creator = v
+			case "Version":
+				b.Version = v
+			}
+
 		case "General":
-			p.general()
+			k, v := keyValue(t)
+			switch k {
+			case "Mode":
+				switch v {
+				case "0":
+					b.Mode = ModeStd
+				default:
+					return nil, ErrGamemodeUnsupported
+
+					/* Kept for future reference
+
+					case "1":
+						b.Mode = ModeTaiko
+					case "2":
+						b.Mode = ModeCatchTheBeat
+					case "3":
+						b.Mode = ModeMania
+
+					*/
+				}
+			}
+
 		case "Difficulty":
-			p.difficulty()
+			k, v := keyValue(t)
+			switch k {
+			case "HPDrainRate":
+				b.HP = parseFloat(v)
+			case "CircleSize":
+				b.CS = parseFloat(v)
+			case "OverallDifficulty":
+				b.OD = parseFloat(v)
+			case "ApproachRate":
+				b.AR = parseFloat(v)
+				arFound = true
+			case "SliderMultiplier":
+				b.SV = parseFloat(v)
+			case "SliderTickRate":
+				b.TickRate = parseFloat(v)
+			}
+
 		case "TimingPoints":
-			p.timing()
+			split := strings.Split(t, ",")
+			if len(split) < 2 {
+				continue
+			}
+
+			t := &Timing{
+				Time:      parseFloat(split[0]),
+				MsPerBeat: parseFloat(split[1]),
+			}
+
+			if len(split) >= 7 {
+				t.Change = split[6] != "0"
+			}
+
+			b.TPoints = append(b.TPoints, t)
+
 		case "HitObjects":
-			objScanner.SetSource(scanner.Bytes())
-			p.objects(objScanner)
-		}
+			split := strings.Split(t, ",")
 
-	}
-	return p.Beatmap
-}
+			if len(split) < 4 {
+				continue
+			}
 
-// Map returns the beatmap info with a specified number of objects parsed
-func (p *Parser) MapbyNum(reader io.Reader, objnum int) *Map {
-	num := objnum
-	var line string
-	objScanner := &ObjScanner{}
-	scanner := bufio.NewScanner(reader)
-	for scanner.Scan() {
-		line = scanner.Text()
-		p.lastline = line
+			o := &HitObject{
+				Time: parseFloat(split[2]),
 
-		if strings.HasPrefix(line, " ") ||
-			strings.HasPrefix(line, "_") {
-			continue
-		}
+				// ignoring error because it wouldn't match anyway
+				Type: parseInt(split[3]),
+			}
 
-		p.lastline = strings.TrimSpace(line)
-		line = p.lastline
-		if len(line) <= 0 {
-			continue
-		}
+			// this would be & 0b1011 if Go had binary literals
+			switch o.Type & 11 {
+			case ObjCircle:
+				b.NCircles++
+				o.Data = Circle{
+					pos: vector.New(
+						parseFloat(split[0]),
+						parseFloat(split[1]),
+					),
+				}
 
-		if strings.HasPrefix(line, "//") {
-			continue
-		}
+			case ObjSpinner:
+				b.NSpinners++
 
-		// [SectionName]
-		if strings.HasPrefix(line, "[") {
-			p.section = line[1 : len(line)-1]
-			continue
-		}
+			case ObjSlider:
+				if len(split) < 8 {
+					continue
+				}
 
-		switch p.section {
-		case "Metadata":
-			p.metadata()
-		case "General":
-			p.general()
-		case "Difficulty":
-			p.difficulty()
-		case "TimingPoints":
-			p.timing()
-		case "HitObjects":
-			objScanner.SetSource(scanner.Bytes())
-			p.objects(objScanner)
-			num -= 1
-			if num == 0 {
-				return p.Beatmap
+				b.NSliders++
+				o.Data = Slider{
+					pos: vector.New(
+						parseFloat(split[0]),
+						parseFloat(split[1]),
+					),
+					repetitions: parseInt(split[7]),
+					distance:    parseFloat(split[8]),
+				}
+			}
+
+			b.Objects = append(b.Objects, o)
+
+			// if objnum is fed
+			if objnum > -1 {
+				objnum--
+				if objnum == 0 {
+					return b, nil
+				}
 			}
 		}
 	}
-	return p.Beatmap
-}
 
+	if !arFound {
+		b.AR = b.OD
+	}
+
+	return b, nil
+}

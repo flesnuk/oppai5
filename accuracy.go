@@ -18,8 +18,8 @@ type Accuracy struct {
  * @param nobjects the total number of hits (n300 + n100 + n50 +
  *        nmisses)
  */
-func Acc(accPercent float64, nobjects, nmisses int) Accuracy {
-	var acc Accuracy
+func Acc(accPercent float64, nobjects, nmisses int) *Accuracy {
+	var acc = &Accuracy{}
 	nmisses = min(nobjects, nmisses)
 	max300 := nobjects - nmisses
 
@@ -31,19 +31,14 @@ func Acc(accPercent float64, nobjects, nmisses int) Accuracy {
 	accPercent = math.Max(0.0, math.Min(maxacc, accPercent))
 
 	/* just some black magic maths from wolfram alpha */
-	acc.N100 =
-		roundOppai(
-			-3.0 *
-				((accPercent*0.01-1.0)*float64(nobjects) +
-					float64(nmisses)) *
-				0.5)
+	acc.N100 = round(-3.0 * ((accPercent*0.01-1.0)*float64(nobjects) + float64(nmisses)) * 0.5)
 
 	if acc.N100 > max300 {
 		/* acc lower than all 100s, use 50s */
 		acc.N100 = 0
 
 		acc.N50 =
-			roundOppai(
+			round(
 				-6.0 *
 					((accPercent*0.01-1.0)*float64(nobjects) +
 						float64(nmisses)) * 0.5)
@@ -52,6 +47,7 @@ func Acc(accPercent float64, nobjects, nmisses int) Accuracy {
 	}
 
 	acc.N300 = nobjects - acc.N100 - acc.N50 - nmisses
+
 	return acc
 }
 

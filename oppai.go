@@ -12,71 +12,71 @@ type Parameters struct {
 	Misses uint16
 	Combo  uint16
 	Mods   uint32
+
+	// When enabled, will calculate pp for the 4 accuracies
+	CalculateMultiAccPP bool
 }
 
 // PP info to return
 type PP struct {
-	PP     PPv2
-	Stats  MapStats
-	Diff   DiffCalc
-	StepPP MultiAccPP
+	PP     *PPv2
+	Stats  *MapStats
+	Diff   *DiffCalc
+	StepPP *MultiAccPP
 }
 
 // PPInfo ..
-func PPInfo(beatmap *Map, p *Parameters) PP {
-	var pp PP
+func PPInfo(beatmap *Map, p *Parameters) (pp *PP, err error) {
 	if p != nil {
-		pp = getPP(beatmap, int(p.Mods), int(p.N300), int(p.N100), int(p.N50), int(p.Misses), int(p.Combo))
+		pp, err = getPP(
+			beatmap, int(p.Mods),
+			int(p.N300), int(p.N100), int(p.N50),
+			int(p.Misses), int(p.Combo),
+			p.CalculateMultiAccPP,
+		)
 	} else {
-		pp = getPP(beatmap, 0, -1, 0, 0, 0, -1)
+		pp, err = getPP(
+			beatmap, 0, -1, 0, 0, 0, -1,
+			p.CalculateMultiAccPP,
+		)
 	}
-	maxcombo := pp.Diff.Beatmap.MaxCombo
-	pp.Diff.Beatmap = Map{MaxCombo: maxcombo}
-	return pp
+
+	pp.Diff.Beatmap = &Map{
+		MaxCombo: pp.Diff.Beatmap.MaxCombo,
+	}
+
+	return
 
 }
 
-func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int) PP {
-
-	diff := (&DiffCalc{}).calcMapWithMods(*beatmap, mods)
-
-	pp := &PPv2{}
-	pp.PPv2WithMods(diff.Aim, diff.Speed, beatmap, mods, n300, n100, n50, nmiss, combo)
+func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int, multiaccPP bool) (*PP, error) {
+	diff := calcMapWithMods(beatmap, mods)
 	diff.Beatmap.MaxCombo = beatmap.MaxCombo
-	//fmt.Printf("%s -  %s (%s - %s) [%s] mapped by %s\n\n",
-	//	beatmap.Artist, beatmap.Title, beatmap.ArtistUnicode,
-	//	beatmap.TitleUnicode, beatmap.Version, beatmap.Creator)
-	//fmt.Printf("%d circles, %d sliders, %d spinners\n",
-	//	beatmap.NCircles, beatmap.NSliders, beatmap.NSpinners)
-	//fmt.Printf("%d/%dx\n", combo, beatmap.maxCombo())
-	//fmt.Printf("%d spacing singletaps (%.4f%%)\n\n", diff.NSingles, float64(diff.NSingles)/float64(len(beatmap.Objects))*100.0)
-	//fmt.Printf("%.2f stars (%.2f aim, %.2f speed)\n", diff.Total,
-	//	diff.Aim, diff.Speed)
-	//fmt.Printf("%.2f%%\n", pp.ComputedAccuracy.Value()*100)
-	//fmt.Printf("%.2f aim pp\n%.2f speed pp\n%.2f acc pp\n\n",
-	//	pp.Aim, pp.Speed, pp.Acc)
-	//
-	//fmt.Printf("%.2f pp\n", pp.Total)
-	return PP{
-		PP:     *pp,
-		Stats:  *diff.mapStats,
-		Diff:   diff,
-		StepPP: (&PPv2{}).PPv2StepWithMods(diff.Aim, diff.Speed, beatmap, mods),
+
+	pp := &PP{
+		PP:    PPv2WithMods(diff.Aim, diff.Speed, beatmap, mods, n300, n100, n50, nmiss, combo),
+		Stats: diff.mapStats,
+		Diff:  diff,
 	}
+
+	if multiaccPP {
+		s, err := pp.PP.PPv2StepWithMods(diff.Aim, diff.Speed, beatmap, mods)
+		if err != nil {
+			return nil, err
+		}
+
+		pp.StepPP = s
+	}
+
+	return pp, nil
 }
 
-// Parse parses the file f and returns a beatmap
-func Parse(f io.Reader) *Map {
-	parser := &Parser{}
-	parser.Beatmap = &Map{}
-	parser.Map(f)
-	return parser.Beatmap
+// Parse returns a Beatmap parsed from an io.Reader.
+func Parse(f io.Reader) (*Map, error) {
+	return parse(f, -1)
 }
 
-// Parse parses the file f and returns a beatmap with a specified number of objects parsed
-func ParsebyNum(f io.Reader, objnum int) *Map {
-	parser := &Parser{}
-	parser.Beatmap = &Map{}
-	parser.MapbyNum(f, objnum)
-	return parser.Beatmap
+// ParsebyNum parses the file f and returns a beatmap with a specified number of objects parsed
+func ParsebyNum(f io.Reader, objnum int) (*Map, error) {
+	return parse(f, objnum)
 }

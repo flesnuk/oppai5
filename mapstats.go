@@ -8,8 +8,8 @@ import "math"
 
 // MapStats ...
 type MapStats struct {
-	AR, OD, CS, HP float32
-	speed          float32
+	AR, OD, CS, HP float64
+	speed          float64
 }
 
 // stats constants
@@ -46,18 +46,18 @@ func ModsApply(mods int, mapstats *MapStats, flags int) *MapStats {
 		mapstats.speed *= 0.75
 	}
 
-	var OdArHpMultiplier float32 = 1.0
+	var ORARHPMultiplier = 1.0
 
 	if (mods & ModsHR) != 0 {
-		OdArHpMultiplier = 1.4
+		ORARHPMultiplier = 1.4
 	}
 
 	if (mods & ModsEZ) != 0 {
-		OdArHpMultiplier *= 0.5
+		ORARHPMultiplier *= 0.5
 	}
 
 	if (flags & ApplyAR) != 0 {
-		mapstats.AR *= OdArHpMultiplier
+		mapstats.AR *= ORARHPMultiplier
 
 		// convert AR into milliseconds window
 		var arms float64
@@ -73,19 +73,21 @@ func ModsApply(mods int, mapstats *MapStats, flags int) *MapStats {
 		arms /= float64(mapstats.speed)
 
 		if arms > AR5MS {
-			mapstats.AR = float32((AR0MS - arms) / ARMsStep1)
+			mapstats.AR = (AR0MS - arms) / ARMsStep1
 		} else {
-			mapstats.AR = float32(5.0 + (AR5MS-arms)/ARMsStep2)
+			mapstats.AR = 5.0 + (AR5MS-arms)/ARMsStep2
 		}
 
 	}
 
 	if (flags & ApplyOD) != 0 {
-		mapstats.OD *= OdArHpMultiplier
+		mapstats.OD *= ORARHPMultiplier
+
 		odms := OD0MS - math.Ceil(ODMsStep*float64(mapstats.OD))
 		odms = math.Min(OD0MS, math.Max(OD10MS, odms))
 		odms /= float64(mapstats.speed)
-		mapstats.OD = float32((OD0MS - odms) / ODMsStep)
+
+		mapstats.OD = (OD0MS - odms) / ODMsStep
 	}
 
 	if (flags & ApplyCS) != 0 {
@@ -97,12 +99,11 @@ func ModsApply(mods int, mapstats *MapStats, flags int) *MapStats {
 			mapstats.CS *= 0.5
 		}
 
-		mapstats.CS = float32(math.Min(10.0, float64(mapstats.CS)))
+		mapstats.CS = math.Min(10.0, mapstats.CS)
 	}
 
 	if (flags & ApplyHP) != 0 {
-		mapstats.HP = float32(
-			math.Min(10.0, float64(mapstats.HP*OdArHpMultiplier)))
+		mapstats.HP = math.Min(10.0, mapstats.HP*ORARHPMultiplier)
 	}
 
 	return mapstats

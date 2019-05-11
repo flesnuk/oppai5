@@ -12,8 +12,8 @@ type Map struct {
 	Version string // difficulty name
 
 	NCircles, NSliders, NSpinners int
-	HP, CS, OD, AR                float32
-	SV, TickRate                  float32
+	HP, CS, OD, AR                float64
+	SV, TickRate                  float64
 	MaxCombo                      int
 
 	Objects []*HitObject
@@ -26,15 +26,15 @@ func (m *Map) maxCombo() int {
 	tnext := math.Inf(-1)
 	var pxPerBeat float64
 
-	for i := 0; i < len(m.Objects); i++ {
-		if (m.Objects[i].Type & ObjSlider) == 0 {
+	for _, obj := range m.Objects {
+		if (obj.Type & ObjSlider) == 0 {
 			res++ // non-sliders add 1 combo
 			continue
 		}
 
 		/* keep track of the current timing point without
 		   looping through all of them for every object */
-		for m.Objects[i].Time >= tnext {
+		for obj.Time >= tnext {
 			tindex++
 
 			if len(m.TPoints) > tindex+1 {
@@ -55,10 +55,9 @@ func (m *Map) maxCombo() int {
 		}
 
 		/* slider, we need to calculate slider ticks */
-		sl := m.Objects[i].Data.(Slider)
+		sl := obj.Data.(Slider)
 
-		var numBeats float64
-		numBeats = (sl.distance * float64(sl.repetitions)) / pxPerBeat
+		numBeats := (sl.distance * float64(sl.repetitions)) / pxPerBeat
 
 		ticks := int(math.Ceil((numBeats - 0.1) /
 			float64(sl.repetitions) * float64(m.TickRate)))
