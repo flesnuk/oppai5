@@ -2,11 +2,12 @@ package oppai
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"testing"
 
-	"github.com/k0kubun/pp"
+	"github.com/go-test/deep"
 )
 
 func BenchmarkPP(b *testing.B) {
@@ -40,5 +41,17 @@ func TestPP(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	pp.Println(PPInfo(b, nil))
+	pp, err := PPInfo(b, nil)
+	if err != nil {
+		panic(err)
+	}
+
+	deep.FloatPrecision = 3
+
+	if diff := deep.Equal(pp.Total, 215.85800529265947); diff != nil {
+		t.Error(diff)
+	}
+
+	fmt.Printf("Refactor: %.2fpp\n", pp.Total)
+	fmt.Printf("Original: %.2fpp\n", 215.85800529265947)
 }

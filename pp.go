@@ -22,41 +22,6 @@ func ppBase(stars float64) float64 {
 		100000.0
 }
 
-// PPv2Parameters : parameters to be passed to PPv2.
-/* aim_stars, speed_stars, max_combo, nsliders, ncircles, nobjects,
-* base_ar, base_od are required.
- */
-type PPv2Parameters struct {
-	Beatmap *Map
-
-	AimStars   float64
-	SpeedStars float64
-	MaxCombo   int
-
-	// object counts for each type
-	NSliders int
-	NCircles int
-	NObjects int
-
-	// the base AR (before applying mods).
-	BaseAR float64
-
-	// the base OD (before applying mods).
-	BaseOD float64
-
-	Mode  int // gamemode
-	Mods  int // the mods bitmask, same as osu! api
-	Combo int // Max combo achieved, if -1 it will default to maxCombo-nmiss
-
-	// if N300 = -1 it will default to nobjects - n100 - n50 - nmiss
-	N300  int
-	N100  int
-	N50   int
-	NMiss int
-
-	ScoreVer int // scorev1 (1) or scorev2 (2).
-}
-
 // PPv2 : structure to store ppv2 values
 type PPv2 struct {
 	Total float64
@@ -64,15 +29,22 @@ type PPv2 struct {
 	Speed float64
 	Acc   float64
 
+	Mods int
+
 	ComputedAccuracy Accuracy
 }
 
-// PPv2WithMods calculates the pp of the map with the mods passed and acc passed
+// PPv2WithMods calculates the pp of the map with
+// the mods passed and acc passed
 func PPv2WithMods(
 	aimStars, speedStars float64, b *Map, mods,
 	n300, n100, n50, nmiss, combo int,
 ) *PPv2 {
-	pp := &PPv2{}
+
+	pp := &PPv2{
+		Mods: mods,
+	}
+
 	pp.ppv2x(
 		aimStars, speedStars, -1, b.NSliders, b.NCircles,
 		len(b.Objects), b.Mode, mods, combo, n300, n100, n50, nmiss,
@@ -84,7 +56,10 @@ func PPv2WithMods(
 
 // PPv2ssWithMods calculates the pp of the map with the mods passed and 100% acc
 func PPv2ssWithMods(aimStars, speedStars float64, b *Map, mods int) *PPv2 {
-	pp := &PPv2{}
+	pp := &PPv2{
+		Mods: mods,
+	}
+
 	pp.ppv2x(
 		aimStars, speedStars, -1, b.NSliders, b.NCircles,
 		len(b.Objects), b.Mode, mods, -1, -1, 0, 0, 0,

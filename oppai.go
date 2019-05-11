@@ -1,6 +1,7 @@
 package oppai
 
 import (
+	"fmt"
 	"io"
 )
 
@@ -19,7 +20,7 @@ type Parameters struct {
 
 // PP info to return
 type PP struct {
-	PP     *PPv2
+	*PPv2
 	Stats  *MapStats
 	Diff   *DiffCalc
 	StepPP *MultiAccPP
@@ -46,7 +47,6 @@ func PPInfo(beatmap *Map, p *Parameters) (pp *PP, err error) {
 	}
 
 	return
-
 }
 
 func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int, multiaccPP bool) (*PP, error) {
@@ -54,13 +54,13 @@ func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int, multiaccPP boo
 	diff.Beatmap.MaxCombo = beatmap.MaxCombo
 
 	pp := &PP{
-		PP:    PPv2WithMods(diff.Aim, diff.Speed, beatmap, mods, n300, n100, n50, nmiss, combo),
+		PPv2:  PPv2WithMods(diff.Aim, diff.Speed, beatmap, mods, n300, n100, n50, nmiss, combo),
 		Stats: diff.mapStats,
 		Diff:  diff,
 	}
 
 	if multiaccPP {
-		s, err := pp.PP.PPv2StepWithMods(diff.Aim, diff.Speed, beatmap, mods)
+		s, err := pp.PPv2StepWithMods(diff.Aim, diff.Speed, beatmap, mods)
 		if err != nil {
 			return nil, err
 		}
@@ -69,6 +69,15 @@ func getPP(beatmap *Map, mods, n300, n100, n50, nmiss, combo int, multiaccPP boo
 	}
 
 	return pp, nil
+}
+
+func (pp *PP) String() string {
+	return fmt.Sprintf(
+		"%.2fpp %.2f%% +%s",
+		pp.Total,
+		pp.ComputedAccuracy.Value()*100,
+		ModsStr(pp.Mods),
+	)
 }
 
 // Parse returns a Beatmap parsed from an io.Reader.

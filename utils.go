@@ -3,6 +3,7 @@ package oppai
 import (
 	"log"
 	"math"
+	"sort"
 	"strconv"
 	"strings"
 )
@@ -76,8 +77,7 @@ var pow = math.Pow
 // optimized reversing
 // https://github.com/golang/go/wiki/SliceTricks
 func reverseSortFloat64s(a []float64) {
-	for i := len(a)/2 - 1; i >= 0; i-- {
-		opp := len(a) - 1 - i
-		a[i], a[opp] = a[opp], a[i]
-	}
+	sort.Slice(a, func(i, j int) bool {
+		return a[i] > a[j]
+	})
 }
