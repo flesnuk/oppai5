@@ -37,7 +37,7 @@ func PPInfo(beatmap *Map, p *Parameters) (pp *PP, err error) {
 	} else {
 		pp, err = getPP(
 			beatmap, 0, -1, 0, 0, 0, -1,
-			p.CalculateMultiAccPP,
+			false,
 		)
 	}
 

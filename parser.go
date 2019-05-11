@@ -118,7 +118,8 @@ func parse(r io.Reader, objnum int) (*Map, error) {
 			}
 
 			o := &HitObject{
-				Time: parseFloat(split[2]),
+				Time:    parseFloat(split[2]),
+				Strains: []float64{0.0, 0.0},
 
 				// ignoring error because it wouldn't match anyway
 				Type: parseInt(split[3]),
@@ -149,8 +150,8 @@ func parse(r io.Reader, objnum int) (*Map, error) {
 						parseFloat(split[0]),
 						parseFloat(split[1]),
 					),
-					repetitions: parseInt(split[7]),
-					distance:    parseFloat(split[8]),
+					repetitions: parseInt(split[6]),
+					distance:    parseFloat(split[7]),
 				}
 			}
 

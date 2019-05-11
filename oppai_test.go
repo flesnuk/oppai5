@@ -3,10 +3,13 @@ package oppai
 import (
 	"bytes"
 	"io/ioutil"
+	"os"
 	"testing"
+
+	"github.com/k0kubun/pp"
 )
 
-func Benchmark(b *testing.B) {
+func BenchmarkPP(b *testing.B) {
 	f, err := ioutil.ReadFile("examples/one/Halozy - Kikoku Doukoku Jigokuraku (Hollow Wings) [Notch Hell].osu")
 	if err != nil {
 		panic(err)
@@ -22,4 +25,20 @@ func Benchmark(b *testing.B) {
 
 		PPInfo(bm, nil)
 	}
+}
+
+func TestPP(t *testing.T) {
+	f, err := os.Open("examples/one/Halozy - Kikoku Doukoku Jigokuraku (Hollow Wings) [Notch Hell].osu")
+	if err != nil {
+		panic(err)
+	}
+
+	defer f.Close()
+
+	b, err := Parse(f)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	pp.Println(PPInfo(b, nil))
 }
