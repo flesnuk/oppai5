@@ -95,7 +95,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 			nspinners := nobjects - nsliders - ncircles
 
 			realAcc = (&Accuracy{
-				N300:    n300 - nsliders - nspinners,
+				N300:    max(n300 - nsliders - nspinners, 0),
 				N100:    n100,
 				N50:     n50,
 				NMisses: nmiss,

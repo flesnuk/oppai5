@@ -67,7 +67,7 @@ func (acc *Accuracy) value(nobjects int) float64 {
 	}
 
 	n300x := acc.N300
-	if acc.N300 <= 0 {
+	if acc.N300 < 0 {
 		n300x = nobjects - acc.N100 - acc.N50 - acc.NMisses
 	}
 
