@@ -74,6 +74,9 @@ func (acc *Accuracy) value(nobjects int) float64 {
 	if nobjects < 0 {
 		nobjects = n300x + acc.N100 + acc.N50 + acc.NMisses
 	}
+	if nobjects == 0 {
+		return 0
+	}
 
 	res := (float64(acc.N50)*50.0 +
 		float64(acc.N100)*100.0 +
