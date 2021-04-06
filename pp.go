@@ -74,6 +74,10 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	var realAcc float64
 	var accuracy float64
 
+	/* scorev1 ignores sliders since they are free 300s
+	and for some reason also ignores spinners */
+	nspinners := nobjects - nsliders - ncircles
+
 	if acc >= 0.0 {
 		realAcc = acc
 		accuracy = acc
@@ -90,10 +94,6 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 
 		switch scoreVersion {
 		case 1:
-			/* scorev1 ignores sliders since they are free 300s
-			and for some reason also ignores spinners */
-			nspinners := nobjects - nsliders - ncircles
-
 			realAcc = (&Accuracy{
 				N300:    max(n300 - nsliders - nspinners, 0),
 				N100:    n100,
@@ -117,7 +117,8 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 		lengthBonus += math.Log10(nobjectsOver2k) * 0.5
 	}
 
-	missPenalty := pow(0.97, float64(nmiss))
+	missPenaltyAim := 0.97 * pow(1 - pow(float64(nmiss) / float64(nobjects), 0.775), float64(nmiss))
+	missPenaltySpeed := 0.97 * pow(1 - pow(float64(nmiss) / float64(nobjects), 0.775), pow(float64(nmiss), 0.875))
 	comboBreak := pow(float64(combo), 0.8) /
 		pow(float64(maxCombo), 0.8)
 
@@ -129,10 +130,10 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	ModsApply(mods, mapstats, ApplyAR|ApplyOD)
 
 	/* ar bonus -------------------------------------------- */
-	arBonus := 1.0
+	arBonus := 0.0
 
 	if mapstats.AR > 10.33 {
-		arBonus += 0.3 * (float64(mapstats.AR) - 10.33)
+		arBonus += 0.4 * (float64(mapstats.AR) - 10.33)
 	} else if mapstats.AR < 8.0 {
 		arBonus += 0.01 * (8.0 - float64(mapstats.AR))
 	}
@@ -140,9 +141,11 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	/* aim pp ---------------------------------------------- */
 	pp.Aim = ppBase(aimStars)
 	pp.Aim *= lengthBonus
-	pp.Aim *= missPenalty
+	if nmiss > 0 {
+		pp.Aim *= missPenaltyAim
+	}
 	pp.Aim *= comboBreak
-	pp.Aim *= arBonus
+	pp.Aim *= 1.0 + math.Min(arBonus, arBonus * (float64(nobjects) / 1000.0))
 
 	hdBonus := 1.0
 	if (mods & ModsHD) != 0 {
@@ -172,15 +175,18 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	/* speed pp -------------------------------------------- */
 	pp.Speed = ppBase(speedStars)
 	pp.Speed *= lengthBonus
-	pp.Speed *= missPenalty
+	if (nmiss > 0) {
+		pp.Speed *= missPenaltySpeed
+	}
 	pp.Speed *= comboBreak
 	if mapstats.AR > 10.33 {
-		pp.Speed *= arBonus
+		pp.Speed *= 1.0 + math.Min(arBonus, arBonus * (float64(nobjects) / 1000.0))
 	}
 	pp.Speed *= hdBonus
 
-	pp.Speed *= 0.02 + accuracy
-	pp.Speed *= 0.96 + float64(od_squared) / 1600.0
+	pp.Speed *= (0.95 + float64(od_squared) / 750.0) *
+		pow(accuracy, (14.5 - math.Max(float64(mapstats.OD), 8.0)) / 2.0)
+	pp.Speed *= pow(0.98, math.Max(0.0, (float64(n50) - float64(nobjects) / 500.0)))
 
 	/* acc pp ---------------------------------------------- */
 	pp.Acc = pow(1.52163, float64(mapstats.OD)) *
@@ -199,11 +205,11 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	finalMultiplier := 1.12
 
 	if (mods & ModsNF) != 0 {
-		finalMultiplier *= 0.90
+		finalMultiplier *= math.Max(0.9, 1.0 - 0.2 * float64(nmiss))
 	}
 
 	if (mods & ModsSO) != 0 {
-		finalMultiplier *= 0.95
+		finalMultiplier *= 1.0 - math.Max(float64(nspinners) / float64(nobjects), 0.85)
 	}
 
 	pp.Total = pow(
