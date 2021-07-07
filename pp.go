@@ -47,7 +47,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 		mode = beatmap.Mode
 		baseAR = beatmap.AR
 		baseOD = beatmap.OD
-		maxCombo = beatmap.MaxCombo()
+		maxCombo = beatmap.GetMaxCombo()
 		nsliders = beatmap.NSliders
 		ncircles = beatmap.NCircles
 		nobjects = len(beatmap.Objects)
