@@ -112,14 +112,10 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	/* global values --------------------------------------- */
 	nobjectsOver2k := float64(nobjects) / 2000.0
 
-	var lengthBonus float64
+	lengthBonus := 0.95 + 0.4*math.Min(1.0, nobjectsOver2k)
 
-	if (mods & ModsRX) != 0 {
-		lengthBonus = 0.95 + 0.4*math.Min(1.0, nobjectsOver2k)*1.1
-	} else if (mods & ModsAP) != 0 {
-		lengthBonus = 0.95 + 0.4*math.Min(1.0, nobjectsOver2k)*1.1
-	} else {
-		lengthBonus = 0.95 + 0.4*math.Min(1.0, nobjectsOver2k)
+	if (mods&ModsRX) != 0 || (mods&ModsAP) != 0 {
+		lengthBonus *= 1.1
 	}
 
 	if nobjects > 2000 {
@@ -223,7 +219,7 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 	if (mods & ModsRX) != 0 {
 		pp.Speed *= pow(0.99, math.Max(0.0, (float64(n50)-float64(nobjects)/666.0)))
 	} else if (mods & ModsAP) != 0 {
-		pp.Speed *= pow(0.98, math.Max(0.0, (float64(n50)-float64(nobjects)/666.0)))
+		pp.Speed *= pow(0.7, math.Max(0.0, (float64(n50)-float64(nobjects)/666.0)))
 	} else {
 		pp.Speed *= pow(0.98, math.Max(0.0, (float64(n50)-float64(nobjects)/500.0)))
 	}
