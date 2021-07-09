@@ -224,6 +224,37 @@ func (pp *PPv2) ppv2x(aimStars, speedStars float64,
 		pp.Speed *= pow(0.98, math.Max(0.0, (float64(n50)-float64(nobjects)/500.0)))
 	}
 
+	// Apply Aim/Speed Difference for relax/ap only
+
+	if (mods&ModsRX) != 0 || (mods&ModsAP) != 0 {
+		diff := math.Abs(math.Abs(pp.Speed) / math.Abs(pp.Aim))
+
+		if diff < 0.2 {
+			pp.Speed *= 0.1
+		} else if diff < 0.5 {
+			pp.Speed *= 0.25
+		} else if diff < 0.75 {
+			pp.Speed *= 0.5
+		} else if diff < 0.85 {
+			pp.Speed *= 0.66
+		}
+
+		if diff >= 0.85 {
+			pp.Speed *= 0.5
+		} else if diff > 0.95 {
+			pp.Speed *= 0.4
+		} else if diff > 1.2 {
+			pp.Speed *= 0.2
+		} else if diff > 1.5 {
+			pp.Speed *= 0.1
+		} else if diff > 2.0 {
+			pp.Speed *= 0.08
+		} else {
+			pp.Speed *= 0.04
+		}
+
+	}
+
 	/* acc pp ---------------------------------------------- */
 	pp.Acc = pow(1.52163, float64(mapstats.OD)) *
 		pow(realAcc, 24.0) * 2.83
