@@ -96,10 +96,12 @@ const (
 	ModsHD int = 1 << 3
 	ModsHR int = 1 << 4
 	ModsDT int = 1 << 6
+	ModsRX int = 1 << 7
 	ModsHT int = 1 << 8
 	ModsNC int = 1 << 9
 	ModsFL int = 1 << 10
 	ModsSO int = 1 << 12
+	ModsAP int = 1 << 13
 
 	ModsSpeedChanging = ModsDT | ModsHT | ModsNC
 	ModsMapChanging   = ModsHR | ModsEZ | ModsSpeedChanging
@@ -142,6 +144,12 @@ func ModsStr(mods int) string {
 	}
 	if (mods & ModsSO) != 0 {
 		s += "SO"
+	}
+	if (mods & ModsRX) != 0 {
+		s += "RX"
+	}
+	if (mods & ModsAP) != 0 {
+		s += "AP"
 	}
 	return s
 }

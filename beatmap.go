@@ -20,7 +20,7 @@ type Map struct {
 	TPoints []*Timing
 }
 
-func (m *Map) maxCombo() int {
+func (m *Map) GetMaxCombo() int {
 	res := 0
 	tindex := -1
 	tnext := math.Inf(-1)
